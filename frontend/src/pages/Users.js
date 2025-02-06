@@ -14,7 +14,7 @@ export default function UserManagement() {
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("http://localhost:5000/api/admin/users", {
+        const response = await axios.get("https://miracle-minds.vercel.app/api/admin/users", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -37,7 +37,7 @@ export default function UserManagement() {
   const handleRoleChange = async (userId) => {
     try {
       await axios.put(
-        `http://localhost:5000/api/admin/users/${userId}/role`,
+        `https://miracle-minds.vercel.app/api/admin/users/${userId}/role`,
         { role: updatedRole },
         {
           headers: {

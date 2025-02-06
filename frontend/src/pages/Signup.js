@@ -44,7 +44,7 @@ export default function CreateAccount() {
     }
 
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/signup", {
+      const response = await axios.post("https://miracle-minds.vercel.app/api/auth/signup", {
         name,
         email,
         assessment,

@@ -24,10 +24,10 @@ export default function TherapistManager() {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem('token');
-        const therapistsRes = await axios.get('http://localhost:5000/api/therapists', {
+        const therapistsRes = await axios.get('https://miracle-minds.vercel.app/api/therapists', {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const therapiesRes = await axios.get('http://localhost:5000/api/therapies', {
+        const therapiesRes = await axios.get('https://miracle-minds.vercel.app/api/therapies', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setTherapists(therapistsRes.data);
@@ -88,12 +88,12 @@ export default function TherapistManager() {
       const payload = { ...therapist, photo: photoUrl };
 
       if (isEditing) {
-        await axios.put(`http://localhost:5000/api/therapists/${editId}`, payload, {
+        await axios.put(`https://miracle-minds.vercel.app/api/therapists/${editId}`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
         toast.success('Therapist updated successfully!', { position: 'top-center' });
       } else {
-        await axios.post('http://localhost:5000/api/therapists', payload, {
+        await axios.post('https://miracle-minds.vercel.app/api/therapists', payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
         toast.success('Therapist added successfully!', { position: 'top-center' });
@@ -105,7 +105,7 @@ export default function TherapistManager() {
       setIsEditing(false);
       setEditId(null);
 
-      const therapistsRes = await axios.get('http://localhost:5000/api/therapists', {
+      const therapistsRes = await axios.get('https://miracle-minds.vercel.app/api/therapists', {
         headers: { Authorization: `Bearer ${token}` },
       });
       setTherapists(therapistsRes.data);
@@ -118,7 +118,7 @@ export default function TherapistManager() {
   const deleteTherapist = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/therapists/${id}`, {
+      await axios.delete(`https://miracle-minds.vercel.app/api/therapists/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success('Therapist deleted successfully!', { position: 'top-center' });

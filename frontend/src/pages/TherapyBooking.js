@@ -25,13 +25,13 @@ export default function TherapyBooking() {
       try {
         const token = localStorage.getItem("token");
         // fetch therapies
-        const therapyRes = await axios.get("http://localhost:5000/api/therapies", {
+        const therapyRes = await axios.get("https://miracle-minds.vercel.app/api/therapies", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setTherapies(therapyRes.data);
 
         // fetch user + profiles
-        const profileRes = await axios.get("http://localhost:5000/api/user", {
+        const profileRes = await axios.get("https://miracle-minds.vercel.app/api/user", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setProfiles(profileRes.data.profiles || []);
@@ -57,7 +57,7 @@ export default function TherapyBooking() {
 
         // GET /api/bookings/timeslots?date=YYYY-MM-DD
         const response = await axios.get(
-          `http://localhost:5000/api/bookings/timeslots?date=${dateString}`,
+          `https://miracle-minds.vercel.app/api/bookings/timeslots?date=${dateString}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -114,7 +114,7 @@ export default function TherapyBooking() {
         date: selectedDate.format("YYYY-MM-DD"),
         timeslot: selectedTimeslot,
       };
-      const response = await axios.post("http://localhost:5000/api/cart", payload, {
+      const response = await axios.post("https://miracle-minds.vercel.app/api/cart", payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success(response.data.message || "Added to cart successfully!", {

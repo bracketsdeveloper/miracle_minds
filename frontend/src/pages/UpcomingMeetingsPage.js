@@ -39,7 +39,7 @@ export default function UpcomingMeetingsPage() {
         });
         return;
       }
-      const response = await axios.get('http://localhost:5000/api/bookings/upcoming', {
+      const response = await axios.get('https://miracle-minds.vercel.app/api/bookings/upcoming', {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUpcoming(response.data);
@@ -60,7 +60,7 @@ export default function UpcomingMeetingsPage() {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await axios.get('http://localhost:5000/api/user', {
+      const response = await axios.get('https://miracle-minds.vercel.app/api/user', {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -132,7 +132,7 @@ export default function UpcomingMeetingsPage() {
 
       // Example: refund/cancel endpoint
       await axios.post(
-        `http://localhost:5000/api/bookings/refund/${selectedBooking._id}`,
+        `https://miracle-minds.vercel.app/api/bookings/refund/${selectedBooking._id}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -175,7 +175,7 @@ export default function UpcomingMeetingsPage() {
     try {
       const token = localStorage.getItem('token');
       const res = await axios.get(
-        `http://localhost:5000/api/bookings/timeslots?date=${dateValue}`,
+        `https://miracle-minds.vercel.app/api/bookings/timeslots?date=${dateValue}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setTimeslots(res.data);
@@ -212,7 +212,7 @@ export default function UpcomingMeetingsPage() {
 
       // Example: update booking
       await axios.post(
-        `http://localhost:5000/api/bookings/reschedule`,
+        `https://miracle-minds.vercel.app/api/bookings/reschedule`,
         {
           bookingId: selectedBooking._id,
           date: newDate,

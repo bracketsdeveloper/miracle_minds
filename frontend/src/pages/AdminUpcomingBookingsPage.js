@@ -14,7 +14,7 @@ export default function AdminUpcomingBookingsPage() {
   const fetchUpcomingBookings = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:5000/api/bookings/admin/upcoming", {
+      const response = await axios.get("https://miracle-minds.vercel.app/api/bookings/admin/upcoming", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUpcomingBookings(response.data);

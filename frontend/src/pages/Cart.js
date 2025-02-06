@@ -21,7 +21,7 @@ export default function CartPage() {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      const response = await axios.get("http://localhost:5000/api/cart", {
+      const response = await axios.get("https://miracle-minds.vercel.app/api/cart", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -47,7 +47,7 @@ export default function CartPage() {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      await axios.delete(`http://localhost:5000/api/cart/${item._id}`, {
+      await axios.delete(`https://miracle-minds.vercel.app/api/cart/${item._id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -87,7 +87,7 @@ export default function CartPage() {
 
       // 1) Create order on the server
       const createOrderRes = await axios.post(
-        "http://localhost:5000/api/payments/create-order",
+        "https://miracle-minds.vercel.app/api/payments/create-order",
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -117,7 +117,7 @@ export default function CartPage() {
           try {
             // 3) Verify payment on the server
             await axios.post(
-              "http://localhost:5000/api/payments/verify",
+              "https://miracle-minds.vercel.app/api/payments/verify",
               {
                 razorpay_order_id,
                 razorpay_payment_id,
