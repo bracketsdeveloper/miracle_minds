@@ -14,7 +14,7 @@ app.use(express.json());
 // Configure CORS for frontend (localhost:3000)
 app.use(
   cors({
-    origin: "http://localhost:3000", // Allow frontend requests
+    origin: "https://miracle-minds-frontend.vercel.app", // Allow frontend requests
     credentials: true, // Allow cookies and authentication headers
   })
 );
@@ -78,7 +78,7 @@ const meetingServer = http.createServer(app);
 // Initialize Socket.io on the meetingServer
 const io = new Server(meetingServer, {
   cors: {
-    origin: "http://localhost:3000", // Allow frontend to connect
+    origin: "https://miracle-minds-frontend.vercel.app", // Allow frontend to connect
     credentials: true,
   },
 });
