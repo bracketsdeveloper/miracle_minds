@@ -41,8 +41,7 @@ export default function Header() {
   };
 
   return (
-    <header className="inset-x-0 top-4 z-50 m-4 rounded-md sticky bg-gradient-to-tr 
-          from-[#af235e] to-[#241d88]">
+    <header className="inset-x-0 top-4 z-50 m-4 rounded-md sticky bg-gradient-to-tr from-[#af235e] to-[#241d88]">
       <nav aria-label="Global" className="flex items-center justify-between p-6 lg:px-8">
         <div className="flex lg:flex-1">
           <Link to="/" className="-m-1.5 p-1.5">
@@ -90,8 +89,8 @@ export default function Header() {
           ))}
         </div>
 
-        <div className="lg:flex lg:flex-1 lg:justify-end gap-6 items-center">
-          {isLoggedIn && userRole==='GENERAL' && (
+        <div className="hidden lg:flex lg:flex-1 lg:justify-end gap-6 items-center">
+          {isLoggedIn && userRole === "GENERAL" && (
             <div className="relative">
               <button
                 onClick={() => setCartDropdownOpen(!cartDropdownOpen)}
@@ -105,7 +104,7 @@ export default function Header() {
                 )}
               </button>
               {cartDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-gray-800 rounded-md shadow-lg">
+                <div className="absolute right-0 mt-2 w-64 bg-gray-800 rounded-md shadow-lg z-50">
                   <h3 className="px-4 py-2 text-sm font-semibold text-gray-200">
                     Cart Items
                   </h3>
@@ -143,7 +142,7 @@ export default function Header() {
                 <UserCircleIcon className="h-6 w-6 text-gray-200" />
               </button>
               {dropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg">
+                <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg z-50">
                   {/* Role-based dashboard link */}
                   {userRole === "EXPERT" ? (
                     <Link
@@ -159,12 +158,14 @@ export default function Header() {
                     >
                       Admin Dashboard
                     </Link>
-                  ) : userRole==="SUBADMIN"? (
-                    <Link to={"/subadmin-dashboard"}
-                    className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white">
-                      SubAdin Dashboard
+                  ) : userRole === "SUBADMIN" ? (
+                    <Link
+                      to="/subadmin-dashboard"
+                      className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white"
+                    >
+                      SubAdmin Dashboard
                     </Link>
-                  ): (
+                  ) : (
                     <Link
                       to="/dashboard"
                       className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white"
