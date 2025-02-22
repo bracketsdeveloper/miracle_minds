@@ -224,6 +224,51 @@ export default function Header() {
             </button>
           </div>
 
+          {/* Cart Icon in Mobile Menu */}
+          {isLoggedIn && userRole === "GENERAL" && (
+            <div className="mt-4">
+              <button
+                onClick={() => setCartDropdownOpen(!cartDropdownOpen)}
+                className="flex items-center gap-2 text-sm font-semibold text-gray-200 hover:text-white"
+              >
+                <ShoppingCartIcon className="h-6 w-6" />
+                <span>Cart</span>
+                {cartItems.length > 0 && (
+                  <span className="bg-red-600 text-white text-xs rounded-full px-2 py-0.5">
+                    {cartItems.length}
+                  </span>
+                )}
+              </button>
+              {cartDropdownOpen && (
+                <div className="mt-2 w-full bg-gray-800 rounded-md shadow-lg">
+                  <h3 className="px-4 py-2 text-sm font-semibold text-gray-200">
+                    Cart Items
+                  </h3>
+                  {cartItems.length > 0 ? (
+                    <ul className="divide-y divide-gray-700">
+                      {cartItems.map((item) => (
+                        <li key={item._id} className="px-4 py-2 text-sm text-gray-200">
+                          <div>{item.therapies[0]?.name || "Therapy"}</div>
+                          <div className="text-xs text-gray-400">
+                            {item.date} | {item.timeslot.from} - {item.timeslot.to}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="px-4 py-2 text-sm text-gray-400">No items in cart.</p>
+                  )}
+                  <Link
+                    to="/dashboard/cart"
+                    className="block px-4 py-2 text-center text-sm font-semibold text-gray-200 hover:bg-gray-700 hover:text-white"
+                  >
+                    View Cart
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="mt-6 flow-root">
             <div className="-my-6 divide-y divide-gray-700">
               <div className="space-y-2 py-6">
