@@ -46,7 +46,7 @@ export default function Landing() {
               focus-visible:outline focus-visible:outline-2 
               focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
             >
-              
+              Get Started
             </Link>
           </div>
         </div>
