@@ -34,16 +34,31 @@ router.post("/send-verification", async (req, res) => {
     }
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "24h" });
     const verificationLink = `${process.env.FRONTEND_URL}/email-verification?token=${token}`;
+    
+    const htmlContent = `
+      <html>
+        <body>
+          <p>Hello ${user.name},</p>
+          <p>Please verify your email by clicking on the following button:</p>
+          <a href="${verificationLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer;">
+            Click Here
+          </a>
+          <p>This link is valid for 24 hours.</p>
+          <p>Thank you.</p>
+        </body>
+      </html>
+    `;
+
     await sendMail({
       to: email,
       subject: "Verify Your Email",
-      text: `Hello ${user.name},\n\nPlease verify your email by clicking on the following link:\n${verificationLink}\n\nThis link is valid for 24 hours.\n\nThank you.`,
+      html: htmlContent, // Use the HTML content here
     });
+
     res.status(200).json({ message: "Verification email sent" });
   } catch (error) {
     console.error("Error sending verification email:", error);
     res.status(500).json({ message: "Error sending verification email" });
   }
 });
-
 module.exports = router;
