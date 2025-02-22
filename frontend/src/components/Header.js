@@ -90,7 +90,7 @@ export default function Header() {
           ))}
         </div>
 
-        <div className="hidden lg:flex lg:flex-1 lg:justify-end gap-6 items-center">
+        <div className="lg:flex lg:flex-1 lg:justify-end gap-6 items-center">
           {isLoggedIn && userRole==='GENERAL' && (
             <div className="relative">
               <button
