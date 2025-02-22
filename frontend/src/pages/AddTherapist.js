@@ -135,7 +135,7 @@ export default function TherapistManager() {
         <h1 className="text-2xl font-bold">Therapist Manager</h1>
         <button
           onClick={() => setShowForm(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+          className="bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700"
         >
           Add Therapist
         </button>
@@ -160,7 +160,7 @@ export default function TherapistManager() {
             <p className="text-sm mb-4">{therapist.about}</p>
             <div className="flex space-x-2">
               <button
-                className="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700"
+                className="bg-pink-600 text-white px-3 py-1 rounded-md hover:bg-pink-700"
                 onClick={() => {
                   setTherapist(therapist);
                   setIsEditing(true);
@@ -209,7 +209,7 @@ export default function TherapistManager() {
                         key={therapy._id}
                         className={`p-2 rounded-md cursor-pointer ${
                           therapist.expertise.includes(therapy.name)
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-pink-600 text-white'
                             : 'bg-gray-700 text-gray-300'
                         }`}
                         onClick={() => addExpertise(therapy)}
@@ -275,7 +275,7 @@ export default function TherapistManager() {
                 </button>
                 <button
                   type="submit"
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                  className="bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700"
                 >
                   Save
                 </button>

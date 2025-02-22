@@ -155,7 +155,7 @@ export default function TimeslotManager() {
             />
             <button
               onClick={addTimeslot}
-              className="bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700"
+              className="bg-pink-600 text-white px-3 py-2 rounded-md hover:bg-pink-700"
             >
               Add Slot
             </button>
@@ -204,8 +204,8 @@ export default function TimeslotManager() {
                   )
                 }
                 className={`px-3 py-2 rounded-md ${
-                  recurringDays.includes(day) ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-300'
-                } hover:bg-green-700`}
+                  recurringDays.includes(day) ? 'bg-purple-600 text-white' : 'bg-gray-700 text-gray-300'
+                } hover:bg-purple-700`}
               >
                 {day}
               </button>
@@ -213,7 +213,7 @@ export default function TimeslotManager() {
           </div>
           <button
             onClick={applyRecurringTimeslots}
-            className="mt-4 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+            className="mt-4 bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
           >
             Apply Recurring Timeslots
           </button>
@@ -256,13 +256,13 @@ export default function TimeslotManager() {
         <div className="flex space-x-4">
           <button
             onClick={saveTimeslots}
-            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+            className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
           >
             Save Timeslots
           </button>
           <button
             onClick={copyTimeslots}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            className="bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700"
           >
             Copy Timeslots
           </button>

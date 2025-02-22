@@ -76,7 +76,7 @@ export default function TherapyManager() {
 
       {/* Add Therapy Button */}
       <button
-        className="absolute top-6 right-6 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+        className="absolute top-6 right-6 bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700"
         onClick={() => {
           setShowForm(true);
           setIsEditing(false);
@@ -106,7 +106,7 @@ export default function TherapyManager() {
                 <td className="px-4 py-2 text-sm">
                   <div className="flex space-x-2">
                     <button
-                      className="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700"
+                      className="bg-pink-600 text-white px-3 py-1 rounded-md hover:bg-pink-700"
                       onClick={() => {
                         setNewTherapy(therapy);
                         setIsEditing(true);
@@ -175,7 +175,7 @@ export default function TherapyManager() {
               </button>
               <button
                 onClick={saveTherapy}
-                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+                className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
               >
                 {isEditing ? "Update" : "Save"}
               </button>

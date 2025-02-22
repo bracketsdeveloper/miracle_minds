@@ -2,76 +2,93 @@
 
 const express = require("express");
 const router = express.Router();
-
 const dayjs = require("dayjs");
+const isSameOrBefore = require("dayjs/plugin/isSameOrBefore");
+const isSameOrAfter = require("dayjs/plugin/isSameOrAfter");
+dayjs.extend(isSameOrBefore);
+dayjs.extend(isSameOrAfter);
+
+// Models
 const Booking = require("../models/Booking");
 const Timeslot = require("../models/Timeslot");
+const Therapist = require("../models/Therapist");
+const Therapy = require("../models/Therapy");
+const Cart = require("../models/Cart");
+
 const { authenticate } = require("../middleware/authenticate");
 
 /**
- * (Optional) GET /api/bookings/timeslot-summary
- * Return an object of { "YYYY-MM-DD": numberOfAvailableSlots } if you want
- * coloring in the frontend. If not needed, you can remove this route.
- */
-// router.get("/timeslot-summary", authenticate, async (req, res) => {
-//   try {
-//     const timeslotDocs = await Timeslot.find();
-//     const dateMap = {};
-
-//     // Build date -> totalSlots
-//     for (const doc of timeslotDocs) {
-//       if (!dateMap[doc.date]) {
-//         dateMap[doc.date] = doc.slots.length;
-//       } else {
-//         dateMap[doc.date] += doc.slots.length;
-//       }
-//     }
-
-//     // Subtract bookings
-//     const allBookings = await Booking.find().select("date timeslot");
-//     for (const b of allBookings) {
-//       const d = b.date; 
-//       if (dateMap[d] !== undefined && dateMap[d] > 0) {
-//         dateMap[d]--;
-//       }
-//     }
-//     // no negative
-//     for (const d of Object.keys(dateMap)) {
-//       if (dateMap[d] < 0) dateMap[d] = 0;
-//     }
-//     return res.status(200).json(dateMap);
-//   } catch (error) {
-//     console.error("Error in timeslot-summary:", error);
-//     return res.status(500).json({ message: "Server error in timeslot-summary" });
-//   }
-// });
-
-/**
- * GET /api/bookings/timeslots?date=YYYY-MM-DD
- * Return available timeslots for that day
+ * GET /api/bookings/timeslots?date=YYYY-MM-DD[&mode=ONLINE|OFFLINE&therapies=ID,ID...]
+ * - If only ?date => returns universal timeslots
+ * - If also ?mode & ?therapies => returns universal timeslots with { hasExpert }
  */
 router.get("/timeslots", authenticate, async (req, res) => {
-  const { date } = req.query;
-  if (!date) {
-    return res.status(400).json({ message: "Date is required" });
-  }
-
   try {
-    // 1) find doc for that date
-    const doc = await Timeslot.findOne({ date });
-    // 2) find existing bookings for that date
-    const bookings = await Booking.find({ date }).select("timeslot");
-    const booked = bookings.map((b) => b.timeslot); // array of { from, to }
+    const { date, mode, therapies } = req.query;
+    if (!date) {
+      return res.status(400).json({ message: "Date is required" });
+    }
 
-    let available = [];
-    if (doc) {
-      available = doc.slots.filter((slot) => {
-        return !booked.some(
-          (book) => book.from === slot.from && book.to === slot.to
+    // 1) find universal timeslot doc
+    const doc = await Timeslot.findOne({ date });
+    let universalSlots = doc ? doc.slots : [];
+
+    // If no mode/therapies => raw slots
+    if (!mode || !therapies) {
+      return res.status(200).json(universalSlots);
+    }
+
+    // coverage logic
+    const therapyIds = therapies.split(",");
+    const therapyDocs = await Therapy.find({ _id: { $in: therapyIds } });
+    const therapyNames = therapyDocs.map((td) => td.name);
+
+    // load all therapists
+    const allTherapists = await Therapist.find({}).lean();
+
+    const result = [];
+
+    for (const slot of universalSlots) {
+      const slotFrom = dayjs(`${date} ${slot.from}`, "YYYY-MM-DD HH:mm");
+      const slotTo = dayjs(`${date} ${slot.to}`, "YYYY-MM-DD HH:mm");
+      if (!slotFrom.isValid() || !slotTo.isValid()) {
+        result.push({ from: slot.from, to: slot.to, hasExpert: false });
+        continue;
+      }
+
+      const anyExpert = allTherapists.some((expert) => {
+        // must support mode
+        if (!expert.supportedModes?.includes(mode.toUpperCase())) return false;
+        // must have availability + expertise
+        if (!expert.availability || !expert.expertise) return false;
+        // find availability for date
+        const avail = expert.availability.find((a) => a.date === date);
+        if (!avail || !avail.slots?.length) return false;
+
+        // coverage check
+        const covers = avail.slots.some((s) => {
+          const tFrom = dayjs(`${date} ${s.from}`, "YYYY-MM-DD HH:mm");
+          const tTo = dayjs(`${date} ${s.to}`, "YYYY-MM-DD HH:mm");
+          if (!tFrom.isValid() || !tTo.isValid()) return false;
+          return tFrom.isSameOrBefore(slotFrom) && tTo.isSameOrAfter(slotTo);
+        });
+        if (!covers) return false;
+
+        // therapy check
+        const hasTherapy = therapyNames.some((tn) =>
+          expert.expertise.includes(tn)
         );
+        return hasTherapy;
+      });
+
+      result.push({
+        from: slot.from,
+        to: slot.to,
+        hasExpert: anyExpert,
       });
     }
-    return res.status(200).json(available);
+
+    return res.status(200).json(result);
   } catch (error) {
     console.error("Error fetching timeslots:", error);
     return res.status(500).json({ message: "Server error fetching timeslots" });
@@ -80,35 +97,97 @@ router.get("/timeslots", authenticate, async (req, res) => {
 
 /**
  * POST /api/bookings/book
- * Book a therapy session
+ * Assign available expert => store in Cart or direct Booking. We'll store in Cart for payment flow.
  */
 router.post("/book", authenticate, async (req, res) => {
-  const { therapies, date, timeslot } = req.body;
-  if (!therapies || !date || !timeslot) {
-    return res
-      .status(400)
-      .json({ message: "All fields (therapies, date, timeslot) are required" });
-  }
-
   try {
-    // Ensure not already booked
-    const existing = await Booking.findOne({
+    const { therapies, date, timeslot, profileId, mode } = req.body;
+    if (!therapies || !date || !timeslot || !profileId || !mode) {
+      return res.status(400).json({
+        message: "All fields (therapies, date, timeslot, profileId, mode) are required",
+      });
+    }
+
+    // duplicates in cart?
+    const existingCartItem = await Cart.findOne({
+      userId: req.user._id,
+      profileId,
+      therapies,
       date,
       "timeslot.from": timeslot.from,
       "timeslot.to": timeslot.to,
     });
-    if (existing) {
-      return res.status(400).json({ message: "Timeslot is already booked" });
+    if (existingCartItem) {
+      return res.status(400).json({ message: "Item already exists in the cart" });
     }
 
-    const newBooking = new Booking({
+    // fetch therapy docs => names
+    const therapyDocs = await Therapy.find({ _id: { $in: therapies } });
+    const therapyNames = therapyDocs.map((td) => td.name);
+
+    // parse timeslot
+    const reqFrom = dayjs(`${date} ${timeslot.from}`, "YYYY-MM-DD HH:mm");
+    const reqTo = dayjs(`${date} ${timeslot.to}`, "YYYY-MM-DD HH:mm");
+    if (!reqFrom.isValid() || !reqTo.isValid()) {
+      return res
+        .status(400)
+        .json({ message: `Invalid timeslot: ${timeslot.from}-${timeslot.to}` });
+    }
+
+    // find all therapists
+    const allTherapists = await Therapist.find({}).lean();
+
+    // filter
+    const matchingExperts = allTherapists.filter((expert) => {
+      // mode
+      if (!expert.supportedModes?.includes(mode.toUpperCase())) return false;
+      // availability + expertise
+      if (!expert.availability || !expert.expertise) return false;
+      // coverage for date
+      const availEntry = expert.availability.find((a) => a.date === date);
+      if (!availEntry || !availEntry.slots?.length) return false;
+
+      const covers = availEntry.slots.some((s) => {
+        const slotFrom = dayjs(`${date} ${s.from}`, "YYYY-MM-DD HH:mm");
+        const slotTo = dayjs(`${date} ${s.to}`, "YYYY-MM-DD HH:mm");
+        if (!slotFrom.isValid() || !slotTo.isValid()) return false;
+        return slotFrom.isSameOrBefore(reqFrom) && slotTo.isSameOrAfter(reqTo);
+      });
+      if (!covers) return false;
+
+      const hasMatchingTherapy = therapyNames.some((tn) =>
+        expert.expertise.includes(tn)
+      );
+      return hasMatchingTherapy;
+    });
+
+    if (matchingExperts.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "No experts available for the selected timeslot/mode" });
+    }
+
+    // pick one
+    const randomIndex = Math.floor(Math.random() * matchingExperts.length);
+    const chosenExpert = matchingExperts[randomIndex];
+
+    // Create cart item
+    const newCartItem = new Cart({
       userId: req.user._id,
+      profileId,
       therapies,
       date,
       timeslot,
+      mode: mode.toUpperCase(),
+      // We store the "therapistId" referencing the "Therapist" collection
+      therapistId: chosenExpert._id,
     });
-    await newBooking.save();
-    return res.status(201).json({ message: "Therapy booked successfully" });
+    await newCartItem.save();
+
+    return res.status(201).json({
+      message: "Item added to cart successfully!",
+      expert: chosenExpert,
+    });
   } catch (error) {
     console.error("Error booking therapy:", error);
     return res.status(500).json({ message: "Server error while booking therapy" });
@@ -117,36 +196,39 @@ router.post("/book", authenticate, async (req, res) => {
 
 /**
  * GET /api/bookings/upcoming
- * Return user's upcoming bookings (date >= today).
+ * Return user's upcoming bookings => .populate("therapies").populate("therapistId","name")
  */
 router.get("/upcoming", authenticate, async (req, res) => {
   try {
     const userId = req.user._id;
-    const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
+    const today = new Date().toISOString().split("T")[0];
+
     const upcomingBookings = await Booking.find({
       userId,
       date: { $gte: today },
     })
       .populate("therapies")
+      .populate("therapistId", "name") // << populate
       .sort({ date: 1 });
+
     return res.status(200).json(upcomingBookings);
   } catch (error) {
     console.error("Error fetching upcoming bookings:", error);
-    return res
-      .status(500)
-      .json({ message: "Server error fetching upcoming bookings" });
+    return res.status(500).json({
+      message: "Server error fetching upcoming bookings",
+    });
   }
 });
 
 /**
  * GET /api/bookings/all
- * Return user's all bookings (past + future).
  */
 router.get("/all", authenticate, async (req, res) => {
   try {
     const userId = req.user._id;
     const allBookings = await Booking.find({ userId })
       .populate("therapies")
+      .populate("therapistId", "name") // if you also want the name here
       .sort({ date: -1 });
     return res.status(200).json(allBookings);
   } catch (error) {
@@ -157,15 +239,15 @@ router.get("/all", authenticate, async (req, res) => {
 
 /**
  * GET /api/bookings/:id
- * Single booking detail
  */
 router.get("/:id", authenticate, async (req, res) => {
   try {
-    const booking = await Booking.findById(req.params.id).populate("therapies");
+    const booking = await Booking.findById(req.params.id)
+      .populate("therapies")
+      .populate("therapistId", "name");
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
-    // Ensure user owns it
     if (booking.userId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Not authorized" });
     }

@@ -26,11 +26,11 @@ export default function Welcome() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center h-full bg-gradient-to-b from-blue-500 to-white text-gray-900 p-6">
+    <div className="flex flex-col items-center justify-center h-full bg-gradient-to-b from-pink-500 to-white text-gray-900 p-6">
       <h1 className="text-4xl font-bold text-white drop-shadow-lg animate-pulse">
         Welcome, {userName}!
       </h1>
-      <p className="mt-6 text-lg text-blue-900 text-center max-w-2xl">
+      <p className="mt-6 text-lg text-pink-900 text-center max-w-2xl">
         Miracle minds is dedicated to delivering innovative solutions that empower
         businesses and individuals alike. We strive to create technology that
         inspires and connects people in meaningful ways.

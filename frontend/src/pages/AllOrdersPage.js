@@ -102,7 +102,7 @@ export default function AllOrdersPage() {
                       {formattedTimeslot}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-200">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-600 text-white">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-600 text-white">
                         Completed
                       </span>
                     </td>

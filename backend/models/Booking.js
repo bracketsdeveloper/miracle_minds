@@ -1,5 +1,4 @@
 // models/Booking.js
-
 const mongoose = require("mongoose");
 
 const bookingSchema = new mongoose.Schema({
@@ -9,7 +8,7 @@ const bookingSchema = new mongoose.Schema({
     required: true,
   },
   profileId: {
-    type: String, // Ensure this matches the type used in Cart
+    type: String,
     required: true,
   },
   therapies: [
@@ -24,19 +23,32 @@ const bookingSchema = new mongoose.Schema({
     from: { type: String, required: true },
     to: { type: String, required: true },
   },
+
+  // NEW FIELDS
+  mode: {
+    type: String,
+    enum: ["ONLINE", "OFFLINE"],
+    default: "ONLINE",
+  },
+  therapistId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Therapist",
+  },
+  therapistName: {
+    type: String,
+    default: "",
+  },
+
   paymentId: { type: String },
   orderId: { type: String },
   signature: { type: String },
   amountPaid: { type: Number, default: 0 },
 
-  // Add "CANCELED" (and optional "REFUNDED") to the enum
   status: {
     type: String,
     enum: ["PENDING", "PAID", "FAILED", "CANCELED", "REFUNDED"],
     default: "PENDING",
   },
-
-  // Optional extra fields
   isCanceled: { type: Boolean, default: false },
   refundId: { type: String, default: "" },
   refundStatus: {
@@ -44,6 +56,15 @@ const bookingSchema = new mongoose.Schema({
     enum: ["NONE", "INITIATED", "COMPLETED"],
     default: "NONE",
   },
+
+  email: { type: String },
+  phone: { type: String },
+  reports: [
+    {
+      url: { type: String },
+      key: { type: String },
+    },
+  ],
 });
 
 module.exports = mongoose.model("Booking", bookingSchema);

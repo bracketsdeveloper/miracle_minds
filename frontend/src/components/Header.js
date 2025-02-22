@@ -1,20 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Dialog, DialogPanel } from '@headlessui/react';
-import { Bars3Icon, XMarkIcon, UserCircleIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
-import { Link, useNavigate } from 'react-router-dom';
-import { useCart } from '../context/CartContext'; // <<< IMPORTANT
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import { Dialog } from "@headlessui/react";
+import { Bars3Icon, XMarkIcon, UserCircleIcon, ShoppingCartIcon } from "@heroicons/react/24/outline";
+import { Link, useNavigate } from "react-router-dom";
+import { useCart } from "../context/CartContext"; // Assuming this context exists
+import axios from "axios";
 
-const navigation = [
-  
-];
+const navigation = [];
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState('');
+  const [userRole, setUserRole] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [cartDropdownOpen, setCartDropdownOpen] = useState(false);
 
@@ -24,12 +22,10 @@ export default function Header() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role');
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
     setIsLoggedIn(!!token);
-    setUserRole(role);
-
-    // If there's a token, we can fetchCartItems if needed
+    setUserRole(role || "");
     if (token) {
       fetchCartItems();
     }
@@ -37,21 +33,19 @@ export default function Header() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
     setIsLoggedIn(false);
-    setUserRole('');
-    navigate('/login');
+    setUserRole("");
+    navigate("/login");
   };
 
   return (
-    <header className="inset-x-0 top-4 z-50 m-4 rounded-md sticky bg-gray-900 text-gray-200">
-      <nav
-        aria-label="Global"
-        className="flex items-center justify-between p-6 lg:px-8"
-      >
+    <header className="inset-x-0 top-4 z-50 m-4 rounded-md sticky bg-gradient-to-tr 
+          from-[#af235e] to-[#241d88]">
+      <nav aria-label="Global" className="flex items-center justify-between p-6 lg:px-8">
         <div className="flex lg:flex-1">
-          <Link to={'/'} className="-m-1.5 p-1.5">
+          <Link to="/" className="-m-1.5 p-1.5">
             <span className="sr-only">Your Company</span>
             <img
               alt="Your Company Logo"
@@ -60,6 +54,19 @@ export default function Header() {
             />
           </Link>
         </div>
+
+        {/* "Are you expert?" Link */}
+        {!isLoggedIn && (
+          <div className="hidden lg:flex">
+            <Link
+              to="/expert-signup"
+              className="text-sm font-semibold text-gray-200 hover:text-white"
+            >
+              Are you Expert?
+            </Link>
+          </div>
+        )}
+
         <div className="flex lg:hidden">
           <button
             type="button"
@@ -67,22 +74,24 @@ export default function Header() {
             className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-400 hover:text-white hover:bg-gray-700"
           >
             <span className="sr-only">Open main menu</span>
-            <Bars3Icon aria-hidden="true" className="size-6" />
+            <Bars3Icon aria-hidden="true" className="h-6 w-6" />
           </button>
         </div>
+
         <div className="hidden lg:flex lg:gap-x-12">
           {navigation.map((item) => (
             <a
               key={item.name}
               href={item.href}
-              className="text-sm/6 font-semibold text-gray-200 hover:text-white"
+              className="text-sm font-semibold text-gray-200 hover:text-white"
             >
               {item.name}
             </a>
           ))}
         </div>
+
         <div className="hidden lg:flex lg:flex-1 lg:justify-end gap-6 items-center">
-          {isLoggedIn && (
+          {isLoggedIn && userRole==='GENERAL' && (
             <div className="relative">
               <button
                 onClick={() => setCartDropdownOpen(!cartDropdownOpen)}
@@ -104,7 +113,7 @@ export default function Header() {
                     <ul className="divide-y divide-gray-700">
                       {cartItems.map((item) => (
                         <li key={item._id} className="px-4 py-2 text-sm text-gray-200">
-                          <div>{item.therapies[0]?.name || 'Therapy'}</div>
+                          <div>{item.therapies[0]?.name || "Therapy"}</div>
                           <div className="text-xs text-gray-400">
                             {item.date} | {item.timeslot.from} - {item.timeslot.to}
                           </div>
@@ -112,12 +121,10 @@ export default function Header() {
                       ))}
                     </ul>
                   ) : (
-                    <p className="px-4 py-2 text-sm text-gray-400">
-                      No items in cart.
-                    </p>
+                    <p className="px-4 py-2 text-sm text-gray-400">No items in cart.</p>
                   )}
                   <Link
-                    to={'/dashboard/cart'}
+                    to="/dashboard/cart"
                     className="block px-4 py-2 text-center text-sm font-semibold text-gray-200 hover:bg-gray-700 hover:text-white"
                   >
                     View Cart
@@ -126,32 +133,54 @@ export default function Header() {
               )}
             </div>
           )}
+
           {isLoggedIn ? (
             <div className="relative">
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-2 text-sm/6 font-semibold text-gray-200 hover:text-white focus:outline-none"
+                className="flex items-center gap-2 text-sm font-semibold text-gray-200 hover:text-white focus:outline-none"
               >
                 <UserCircleIcon className="h-6 w-6 text-gray-200" />
               </button>
               {dropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg">
-                  {userRole === 'ADMIN' ? (
+                  {/* Role-based dashboard link */}
+                  {userRole === "EXPERT" ? (
                     <Link
-                      to={'/admin-dashboard'}
+                      to="/expert-dashboard"
+                      className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white"
+                    >
+                      Expert Dashboard
+                    </Link>
+                  ) : userRole === "ADMIN" ? (
+                    <Link
+                      to="/admin-dashboard"
                       className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white"
                     >
                       Admin Dashboard
                     </Link>
-                  ) : (
+                  ) : userRole==="SUBADMIN"? (
+                    <Link to={"/subadmin-dashboard"}
+                    className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white">
+                      SubAdin Dashboard
+                    </Link>
+                  ): (
                     <Link
-                      to={'/dashboard'}
+                      to="/dashboard"
                       className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white"
                     >
                       Dashboard
                     </Link>
                   )}
-                  
+
+                  {/* Example: Edit Profile link */}
+                  <Link
+                    to="/edit-profile"
+                    className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white"
+                  >
+                    Edit Profile
+                  </Link>
+
                   <button
                     onClick={handleLogout}
                     className="w-full text-left block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white"
@@ -163,8 +192,8 @@ export default function Header() {
             </div>
           ) : (
             <Link
-              to={'/login'}
-              className="text-sm/6 font-semibold text-gray-200 hover:text-white"
+              to="/login"
+              className="text-sm font-semibold text-gray-200 hover:text-white"
             >
               Log in <span aria-hidden="true">&rarr;</span>
             </Link>
@@ -172,13 +201,71 @@ export default function Header() {
         </div>
       </nav>
 
-      {/* Mobile menu code omitted for brevity */}
-      <Dialog
-        open={mobileMenuOpen}
-        onClose={setMobileMenuOpen}
-        className="lg:hidden"
-      >
-        {/* ... */}
+      <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
+        <div className="fixed inset-0 z-50 bg-gray-800 bg-opacity-75" />
+        <Dialog.Panel className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-gray-900 px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-700">
+          <div className="flex items-center justify-between">
+            <Link to="/" className="-m-1.5 p-1.5">
+              <span className="sr-only">Your Company</span>
+              <img
+                alt="Your Company Logo"
+                src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600"
+                className="h-8 w-auto"
+              />
+            </Link>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(false)}
+              className="-m-2.5 rounded-md p-2.5 text-gray-400 hover:text-white hover:bg-gray-700"
+            >
+              <span className="sr-only">Close menu</span>
+              <XMarkIcon aria-hidden="true" className="h-6 w-6" />
+            </button>
+          </div>
+
+          <div className="mt-6 flow-root">
+            <div className="-my-6 divide-y divide-gray-700">
+              <div className="space-y-2 py-6">
+                {navigation.map((item) => (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold text-gray-200 hover:bg-gray-800 hover:text-white"
+                  >
+                    {item.name}
+                  </a>
+                ))}
+
+                {!isLoggedIn && (
+                  <a
+                    href="/expert-signup"
+                    className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold text-gray-200 hover:bg-gray-800 hover:text-white"
+                  >
+                    Are you Expert?
+                  </a>
+                )}
+              </div>
+
+              <div className="py-6">
+                {isLoggedIn ? (
+                  <button
+                    onClick={handleLogout}
+                    className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold text-gray-200 hover:bg-gray-800 hover:text-white"
+                  >
+                    Logout
+                  </button>
+                ) : (
+                  <Link
+                    to="/login"
+                    className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold text-gray-200 hover:bg-gray-800 hover:text-white"
+                  >
+                    Log in
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </Dialog.Panel>
       </Dialog>
     </header>
   );

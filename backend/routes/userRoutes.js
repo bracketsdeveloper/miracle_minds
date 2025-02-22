@@ -37,7 +37,7 @@ router.put("/edit", authenticate, async (req, res) => {
 router.get("/users", authenticate, async (req, res) => {
   console.log("Request to fetch all users received.");
   try {
-    const users = await User.find({}, "name dateOfBirth address email role");
+    const users = await User.find({}, "name dateOfBirth address email phone role");
     console.log("Users fetched successfully:", users);
     res.status(200).json(users);
   } catch (err) {

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from "react";
 import axios from "axios";
@@ -11,119 +11,173 @@ import "react-toastify/dist/ReactToastify.css";
 import { Link } from "react-router-dom";
 
 export default function TherapyBooking() {
+  // Step 1: Therapy
   const [therapies, setTherapies] = useState([]);
+  const [selectedTherapies, setSelectedTherapies] = useState([]);
+
+  // Step 2: Mode
+  const [mode, setMode] = useState(null); // "ONLINE" or "OFFLINE" or null
+
+  // Step 3: Profile
   const [profiles, setProfiles] = useState([]);
   const [selectedProfile, setSelectedProfile] = useState("");
-  const [selectedTherapies, setSelectedTherapies] = useState([]);
+
+  // Step 4: Date
   const [selectedDate, setSelectedDate] = useState(dayjs());
-  const [timeslots, setTimeslots] = useState([]);
-  const [selectedTimeslot, setSelectedTimeslot] = useState("");
+
+  // Step 5: Timeslot (with coverage info)
+  const [timeslots, setTimeslots] = useState([]); 
+  const [selectedTimeslot, setSelectedTimeslot] = useState(null);
+
+  // Current step (1..5)
   const [currentStep, setCurrentStep] = useState(1);
 
+  // Fetch therapies and user profiles once
   useEffect(() => {
-    const fetchTherapiesAndProfiles = async () => {
+    const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
-        // fetch therapies
+        // 1) Therapies
         const therapyRes = await axios.get("https://miracle-minds.vercel.app/api/therapies", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setTherapies(therapyRes.data);
 
-        // fetch user + profiles
-        const profileRes = await axios.get("https://miracle-minds.vercel.app/api/user", {
+        // 2) User => profiles
+        const userRes = await axios.get("https://miracle-minds.vercel.app/api/user", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setProfiles(profileRes.data.profiles || []);
+        const userProfiles = userRes.data?.profiles || [];
+        setProfiles(userProfiles);
 
+        // If there's exactly 1 profile, auto-select it
+        if (userProfiles.length === 1) {
+          setSelectedProfile(userProfiles[0]._id);
+        }
       } catch (error) {
         toast.error("Error fetching therapies or profiles!", {
           position: "top-center",
           autoClose: 3000,
         });
-        console.error("Error fetching data:", error);
+        console.error("Error:", error);
       }
     };
-
-    fetchTherapiesAndProfiles();
+    fetchData();
   }, []);
 
+  /**
+   * Whenever these dependencies change:
+   *  - selectedProfile, selectedTherapies, selectedDate, mode
+   * we fetch timeslots from:
+   *    GET /api/bookings/timeslots?date=YYYY-MM-DD[&mode=ONLINE|OFFLINE&therapies=ID,ID...]
+   * If mode & therapies are present, we get `hasExpert` in the response.
+   */
   useEffect(() => {
     const fetchTimeslots = async () => {
-      if (!selectedProfile || selectedTherapies.length === 0) return;
+      // We only call if we have a date + some therapy selected + a mode + a profile
+      if (!selectedProfile || selectedTherapies.length === 0 || !mode) {
+        setTimeslots([]); 
+        return;
+      }
       try {
         const token = localStorage.getItem("token");
-        const dateString = selectedDate.format("YYYY-MM-DD");
+        const dateStr = selectedDate.format("YYYY-MM-DD");
+        const therapyIds = selectedTherapies.join(","); // "id1,id2"
 
-        // GET /api/bookings/timeslots?date=YYYY-MM-DD
-        const response = await axios.get(
-          `https://miracle-minds.vercel.app/api/bookings/timeslots?date=${dateString}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        // build query
+        let url = `https://miracle-minds.vercel.app/api/bookings/timeslots?date=${dateStr}&mode=${mode}&therapies=${therapyIds}`;
 
-        // If selected day is "today", filter out timeslots in the past
-        let filteredSlots = response.data;
-        const todayString = dayjs().format("YYYY-MM-DD");
+        const res = await axios.get(url, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-        if (dateString === todayString) {
-          // remove timeslots that have already passed
+        // If the route returns e.g. [ { from, to, hasExpert }, ... ]
+        let avail = res.data || [];
+
+        // Filter out past times if "today"
+        const todayStr = dayjs().format("YYYY-MM-DD");
+        if (dateStr === todayStr) {
           const now = dayjs();
-          filteredSlots = filteredSlots.filter((slot) => {
-            const slotTime = dayjs(`${dateString} ${slot.from}`, "YYYY-MM-DD HH:mm");
-            return slotTime.isAfter(now); // keep only future slots
+          avail = avail.filter((slot) => {
+            // parse each slot from?
+            const slotTime = dayjs(`${dateStr} ${slot.from}`, "YYYY-MM-DD HH:mm");
+            return slotTime.isAfter(now);
           });
         }
 
-        setTimeslots(filteredSlots);
+        setTimeslots(avail);
       } catch (error) {
+        console.error("Error fetching timeslots coverage:", error);
         toast.error("Error fetching timeslots!", {
           position: "top-center",
           autoClose: 3000,
         });
-        console.error("Error fetching timeslots:", error);
       }
     };
     fetchTimeslots();
-  }, [selectedDate, selectedProfile, selectedTherapies]);
+  }, [selectedProfile, selectedTherapies, selectedDate, mode]);
 
-  const handleTherapySelection = (therapyId) => {
-    setSelectedTherapies([therapyId]);
-  };
-
+  // Step nav
   const handleNext = () => {
-    setCurrentStep((prev) => Math.min(prev + 1, 4));
+    setCurrentStep((prev) => Math.min(prev + 1, 5));
   };
-
   const handlePrevious = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
+  // step 1: single therapy selection
+  const handleTherapySelection = (therapyId) => {
+    setSelectedTherapies([therapyId]);
+  };
+
+  // step 2: mode
+  const handleModeSelection = (chosenMode) => {
+    setMode(chosenMode);
+  };
+
+  // step 4: date nav
+  const handlePreviousDate = () => {
+    const newDate = selectedDate.subtract(1, "day");
+    if (newDate.isBefore(dayjs(), "day")) {
+      toast.warning("Cannot go to a past date!");
+      return;
+    }
+    setSelectedDate(newDate);
+  };
+  const handleNextDate = () => {
+    setSelectedDate(selectedDate.add(1, "day"));
+  };
+
+  // final step: add to cart => /book
   const addToCart = async () => {
+    if (!selectedProfile || selectedTherapies.length === 0 || !selectedTimeslot || !mode) {
+      toast.error("Please select all required fields!", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      return;
+    }
     try {
-      if (!selectedProfile || !selectedTherapies.length || !selectedTimeslot) {
-        toast.error("Please select all required fields!", {
-          position: "top-center",
-          autoClose: 3000,
-        });
-        return;
-      }
       const token = localStorage.getItem("token");
       const payload = {
-        profileId: selectedProfile,
         therapies: selectedTherapies,
         date: selectedDate.format("YYYY-MM-DD"),
-        timeslot: selectedTimeslot,
+        timeslot: selectedTimeslot, 
+        profileId: selectedProfile,
+        mode,
       };
-      const response = await axios.post("https://miracle-minds.vercel.app/api/cart", payload, {
+      const response = await axios.post("https://miracle-minds.vercel.app/api/bookings/book", payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success(response.data.message || "Added to cart successfully!", {
         position: "top-center",
         autoClose: 3000,
       });
-      // Reset
+
+      // reset
       setSelectedTherapies([]);
-      setSelectedTimeslot("");
+      setMode(null);
+      setSelectedTimeslot(null);
       setCurrentStep(1);
     } catch (error) {
       toast.error(
@@ -134,25 +188,10 @@ export default function TherapyBooking() {
     }
   };
 
-  // Move date backward by 1 day if not < today
-  const handlePreviousDate = () => {
-    const newDate = selectedDate.subtract(1, "day");
-    if (newDate.isBefore(dayjs(), "day")) {
-      toast.warning("Cannot go to a past date!");
-      return;
-    }
-    setSelectedDate(newDate);
-  };
-
-  // Move date forward by 1 day
-  const handleNextDate = () => {
-    const newDate = selectedDate.add(1, "day");
-    setSelectedDate(newDate);
-  };
-
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <div className="p-6 bg-gray-900 text-gray-200 rounded-md max-w-5xl mx-auto">
+        {/* Step Navigation */}
         <div className="flex justify-between mb-4">
           <button
             onClick={handlePrevious}
@@ -163,8 +202,8 @@ export default function TherapyBooking() {
           </button>
           <button
             onClick={handleNext}
-            disabled={currentStep === 4}
-            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50"
+            disabled={currentStep === 5}
+            className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 disabled:opacity-50"
           >
             Next
           </button>
@@ -173,7 +212,7 @@ export default function TherapyBooking() {
         {/* Step 1: Select Therapy */}
         {currentStep === 1 && (
           <div>
-            <h2 className="text-xl font-bold mb-6">Select Your Therapy</h2>
+            <h2 className="text-xl font-bold mb-4">Select Therapy</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {therapies.map((therapy) => {
                 const isSelected = selectedTherapies.includes(therapy._id);
@@ -181,32 +220,15 @@ export default function TherapyBooking() {
                   <div
                     key={therapy._id}
                     onClick={() => handleTherapySelection(therapy._id)}
-                    className={`
-                      bg-gray-800 rounded-lg shadow-md p-4 cursor-pointer 
-                      flex flex-col justify-between 
-                      transition-transform transform hover:scale-105
-                      ${isSelected ? "border-2 border-blue-500" : "border border-gray-700"}
-                    `}
+                    className={`bg-gray-800 p-4 rounded-lg cursor-pointer transition hover:scale-105 ${
+                      isSelected ? "border-2 border-pink-500" : "border border-gray-600"
+                    }`}
                   >
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2 text-white">
-                        {therapy.name}
-                      </h3>
-                      <p className="text-sm text-gray-300 mb-4">
-                        {/* If therapy has a 'description' field, display it; else remove this */}
-                        {therapy.description || "No description provided."}
-                      </p>
-                    </div>
-                    <div className="mt-auto">
-                      <p className="text-md font-bold text-gray-100">
-                        Price: ₹{therapy.cost}
-                      </p>
-                      {isSelected ? (
-                        <p className="mt-2 text-blue-400 font-semibold">Selected</p>
-                      ) : (
-                        <p className="mt-2 text-gray-400">Tap to Select</p>
-                      )}
-                    </div>
+                    <h3 className="text-lg font-semibold mb-2">{therapy.name}</h3>
+                    <p className="text-sm text-gray-300">
+                      {therapy.description || "No description provided."}
+                    </p>
+                    <p className="mt-2 font-bold">₹{therapy.cost}</p>
                   </div>
                 );
               })}
@@ -214,10 +236,37 @@ export default function TherapyBooking() {
           </div>
         )}
 
-        {/* Step 2: Select Profile */}
+        {/* Step 2: Choose Mode */}
         {currentStep === 2 && (
           <div>
-            <h2 className="text-lg font-semibold mb-4">Select Profile</h2>
+            <h2 className="text-xl font-bold mb-4">Choose Mode of Session</h2>
+            <div className="grid grid-cols-2 gap-6">
+              <div
+                onClick={() => handleModeSelection("ONLINE")}
+                className={`p-6 rounded-lg cursor-pointer text-center transition hover:scale-105 ${
+                  mode === "ONLINE" ? "bg-pink-600" : "bg-gray-800"
+                }`}
+              >
+                <h3 className="text-lg font-semibold mb-2">Online</h3>
+                <p className="text-sm text-gray-300">Conduct via video call.</p>
+              </div>
+              <div
+                onClick={() => handleModeSelection("OFFLINE")}
+                className={`p-6 rounded-lg cursor-pointer text-center transition hover:scale-105 ${
+                  mode === "OFFLINE" ? "bg-pink-600" : "bg-gray-800"
+                }`}
+              >
+                <h3 className="text-lg font-semibold mb-2">Offline</h3>
+                <p className="text-sm text-gray-300">In-person at our center.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Select Profile */}
+        {currentStep === 3 && (
+          <div>
+            <h2 className="text-xl font-bold mb-4">Select Profile</h2>
             {profiles.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {profiles.map((profile) => (
@@ -226,7 +275,7 @@ export default function TherapyBooking() {
                     onClick={() => setSelectedProfile(profile._id)}
                     className={`p-4 rounded-lg text-center cursor-pointer ${
                       selectedProfile === profile._id
-                        ? "bg-blue-600 text-white"
+                        ? "bg-pink-600 text-white"
                         : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                     }`}
                   >
@@ -236,12 +285,10 @@ export default function TherapyBooking() {
               </div>
             ) : (
               <div className="text-center">
-                <p className="text-gray-300 mb-4">
-                  No profiles available. Please create one.
-                </p>
+                <p className="text-gray-300 mb-4">No profiles available. Please create one.</p>
                 <Link
-                  to={"/dashboard/edit-profile"}
-                  className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+                  to="/dashboard/edit-profile"
+                  className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
                 >
                   Add Profile
                 </Link>
@@ -250,25 +297,23 @@ export default function TherapyBooking() {
           </div>
         )}
 
-        {/* Step 3: Select Date */}
-        {currentStep === 3 && (
+        {/* Step 4: Select Date */}
+        {currentStep === 4 && (
           <div>
-            <h2 className="text-lg font-semibold mb-4">Select Date</h2>
+            <h2 className="text-xl font-bold mb-4">Select Date</h2>
             <DateCalendar
               value={selectedDate}
-              onChange={(newValue) => setSelectedDate(newValue)}
+              onChange={(newVal) => setSelectedDate(newVal)}
               className="bg-gray-700 rounded-lg p-4 shadow-lg"
               disablePast
             />
           </div>
         )}
 
-        {/* Step 4: Select Timeslot */}
-        {currentStep === 4 && (
+        {/* Step 5: Select Timeslot */}
+        {currentStep === 5 && (
           <div>
-            <h2 className="text-lg font-semibold mb-4">Select Timeslot</h2>
-
-            {/* Next/Prev Date at the top + showing the date */}
+            <h2 className="text-xl font-bold mb-4">Select Timeslot</h2>
             <div className="flex items-center justify-between mb-4">
               <button
                 onClick={handlePreviousDate}
@@ -281,7 +326,7 @@ export default function TherapyBooking() {
               </p>
               <button
                 onClick={handleNextDate}
-                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+                className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
               >
                 Next Date
               </button>
@@ -291,26 +336,47 @@ export default function TherapyBooking() {
               <p className="text-gray-400">No timeslots available for this date.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {timeslots.map((slot, index) => (
-                  <div
-                    key={index}
-                    onClick={() => setSelectedTimeslot(slot)}
-                    className={`p-4 rounded-lg text-center cursor-pointer ${
-                      selectedTimeslot.from === slot.from &&
-                      selectedTimeslot.to === slot.to
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                    }`}
-                  >
-                    {slot.from} - {slot.to}
-                  </div>
-                ))}
+                {timeslots.map((slot, idx) => {
+                  // If slot.hasExpert is false => mark red
+                  const isSelected =
+                    selectedTimeslot &&
+                    selectedTimeslot.from === slot.from &&
+                    selectedTimeslot.to === slot.to;
+
+                  let tileClasses = "";
+                  if (slot.hasExpert === false) {
+                    // Red tile + no click
+                    tileClasses = "bg-red-600 text-white cursor-not-allowed";
+                  } else {
+                    // tile is available => normal
+                    tileClasses = isSelected
+                      ? "bg-pink-600 text-white"
+                      : "bg-gray-800 text-gray-300 hover:bg-gray-700 cursor-pointer";
+                  }
+
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => {
+                        if (slot.hasExpert) {
+                          setSelectedTimeslot(slot);
+                        }
+                      }}
+                      className={`p-4 rounded-lg text-center transition ${tileClasses}`}
+                    >
+                      <p>{slot.from} - {slot.to}</p>
+                      {slot.hasExpert === false && (
+                        <p className="mt-2 font-bold">No Expert Available</p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
 
             <button
               onClick={addToCart}
-              className="mt-4 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+              className="mt-4 bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
             >
               Add to Cart
             </button>

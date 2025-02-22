@@ -7,7 +7,7 @@ const router = express.Router();
 // Fetch all users
 router.get("/users", authenticate, authorizeAdmin, async (req, res) => {
   try {
-    const users = await User.find({}, "name dateOfBirth address email role");
+    const users = await User.find({}, "name dateOfBirth address phone email role");
     res.status(200).json(users);
   } catch (err) {
     console.error("Error fetching users:", err);

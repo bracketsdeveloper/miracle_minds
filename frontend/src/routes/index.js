@@ -20,6 +20,16 @@ import MeetingPage from "../pages/MeetingPage";
 import AdminUpcomingBookingsPage from "../pages/AdminUpcomingBookingsPage";
 import AdminAllBookingsPage from "../pages/AdminAllBookingsPage";
 import AdminBookingDetailPage from "../pages/AdminBookingDetailPage";
+import AdminCreateBookingPage from "../pages/AdminCreateBookingPage";
+import ExpertLogin from "../pages/ExpertLogin";
+import ExpertSignup from "../pages/ExpertSignup";
+import EmailVerification from "../helpers/EmailVerification";
+import ExpertDashboard from "../pages/ExpertDashboard";
+import ExpertProfile from "../pages/ExpertProfile";
+import ExpertAvailability from "../pages/ExpertAvailability";
+import ExpertUpcomingMeetings from "../pages/ExpertUpcomingMeetings";
+import ExpertPastMeetings from "../pages/ExpertPastMeetings";
+import SubAdminManager from "../pages/SubAdminManager";
 
 const router = createBrowserRouter([
     {
@@ -37,6 +47,40 @@ const router = createBrowserRouter([
             {
                 path: '/signup',
                 element: <Signup />,
+            },
+            {
+                path:'expert-login',
+                element: <ExpertLogin />,
+            },
+            {
+                path:'expert-signup',
+                element: <ExpertSignup />,
+            },
+            {
+                path:'email-verification',
+                element: <EmailVerification />,
+            },
+            {
+                path:'/expert-dashboard',
+                element: <ExpertDashboard />,
+                children: [
+                    {
+                        path: 'profile',
+                        element: <ExpertProfile />,
+                    },
+                    {
+                        path:'availability',
+                        element: <ExpertAvailability />,
+                    },
+                    {
+                        path:'upcoming-bookings',
+                        element:<ExpertUpcomingMeetings/>
+                    },
+                    {
+                        path:'bookings',
+                        element:<ExpertPastMeetings/>
+                    }
+                ]
             },
             {
                 path: '/dashboard',
@@ -103,6 +147,14 @@ const router = createBrowserRouter([
                     {
                         path: 'bookings/detail/:bookingId',
                         element: <AdminBookingDetailPage/>
+                    },
+                    {
+                        path: 'create-bookings',
+                        element: <AdminCreateBookingPage/>
+                    },
+                    {
+                        path:'subadmin-manager',
+                        element:<SubAdminManager/>
                     }
                     
                 ]

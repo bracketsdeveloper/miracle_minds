@@ -1,30 +1,37 @@
+// models/Cart.js
 const mongoose = require("mongoose");
 
-const CartSchema = new mongoose.Schema({
+const cartSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User", // Reference to the User model
+    ref: "User",
     required: true,
   },
   profileId: {
-    type: String, // Profile IDs are strings within the User model
+    type: String, // Because it's inside the User's "profiles"
     required: true,
   },
   therapies: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Therapy", // Reference to the Therapy model
+      ref: "Therapy",
       required: true,
     },
   ],
-  date: {
-    type: String,
-    required: true,
-  },
+  date: { type: String, required: true },
   timeslot: {
     from: { type: String, required: true },
     to: { type: String, required: true },
   },
+  therapist: {
+    type: String, // storing therapist.userId or therapist doc's userId as string
+  },
+  // NEW: store the chosen mode
+  mode: {
+    type: String,
+    enum: ["ONLINE", "OFFLINE"],
+    default: "ONLINE",
+  },
 });
 
-module.exports = mongoose.model("Cart", CartSchema);
+module.exports = mongoose.model("Cart", cartSchema);

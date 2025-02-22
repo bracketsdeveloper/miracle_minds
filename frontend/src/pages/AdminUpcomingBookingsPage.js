@@ -57,7 +57,7 @@ export default function AdminUpcomingBookingsPage() {
                     <td className="px-4 py-2">
                       <Link
                         to={`/admin-dashboard/bookings/detail/${booking._id}`}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+                        className="bg-pink-600 hover:bg-pink-700 text-white px-3 py-1 rounded"
                       >
                         View
                       </Link>

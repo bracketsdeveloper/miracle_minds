@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -13,9 +13,6 @@ export default function CartPage() {
     fetchCartItems();
   }, []);
 
-  /**
-   * Fetch cart items and calculate total cost.
-   */
   const fetchCartItems = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -24,7 +21,6 @@ export default function CartPage() {
       const response = await axios.get("https://miracle-minds.vercel.app/api/cart", {
         headers: { Authorization: `Bearer ${token}` },
       });
-
       const items = response.data;
       const total = items.reduce((sum, item) => sum + (item.therapies[0]?.cost || 0), 0);
 
@@ -39,9 +35,6 @@ export default function CartPage() {
     }
   };
 
-  /**
-   * Remove a specific item from the cart, then refresh the cart items.
-   */
   const handleRemoveFromCart = async (item) => {
     try {
       const token = localStorage.getItem("token");
@@ -57,7 +50,6 @@ export default function CartPage() {
         autoClose: 3000,
       });
 
-      // Option 2: Re-fetch cart without full page reload
       await fetchCartItems();
     } catch (error) {
       toast.error("Failed to remove item from cart.", {
@@ -68,10 +60,6 @@ export default function CartPage() {
     }
   };
 
-  /**
-   * Initiate payment: create Razorpay order, open the payment popup,
-   * then verify the payment signature on success.
-   */
   const handleCheckout = async () => {
     try {
       if (!cartItems.length) {
@@ -85,14 +73,13 @@ export default function CartPage() {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      // 1) Create order on the server
+      // 1) Create order
       const createOrderRes = await axios.post(
         "https://miracle-minds.vercel.app/api/payments/create-order",
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Check if the server indicated success
       if (!createOrderRes.data.success) {
         toast.error("Could not create Razorpay order.", {
           position: "top-center",
@@ -101,9 +88,8 @@ export default function CartPage() {
         return;
       }
 
-      const { orderId, amount, currency, cartItems: serverCartItems } = createOrderRes.data;
+      const { orderId, amount, currency } = createOrderRes.data;
 
-      // 2) Razorpay checkout
       const options = {
         key: process.env.REACT_APP_RAZORPAY_KEY_ID,
         amount: amount.toString(),
@@ -112,10 +98,10 @@ export default function CartPage() {
         description: "Therapy Payment",
         order_id: orderId,
         handler: async function (response) {
-          const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = response;
-
+          const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+            response;
           try {
-            // 3) Verify payment on the server
+            // 3) Verify on the server
             await axios.post(
               "https://miracle-minds.vercel.app/api/payments/verify",
               {
@@ -131,7 +117,6 @@ export default function CartPage() {
               autoClose: 3000,
             });
 
-            // Option 2: Re-fetch cart instead of hard refresh
             await fetchCartItems();
           } catch (error) {
             toast.error("Payment verification/booking failed.", {
@@ -167,12 +152,13 @@ export default function CartPage() {
 
       {cartItems.length > 0 ? (
         <>
-          {/* Cart Items in a Responsive Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {cartItems.map((item) => {
               const therapyName = item.therapies[0]?.name || "N/A";
               const therapyCost = item.therapies[0]?.cost || 0;
               const profileName = item.profile?.name || "No Profile Name";
+              const therapistName = item.therapist?.name || "Not Assigned";
+              const itemMode = item.mode?.toUpperCase() || "ONLINE";
 
               return (
                 <div
@@ -185,10 +171,17 @@ export default function CartPage() {
                       <span className="font-semibold">Profile:</span> {profileName}
                     </p>
                     <p className="text-sm text-gray-400 mb-1">
+                      <span className="font-semibold">Therapist:</span> {therapistName}
+                    </p>
+                    <p className="text-sm text-gray-400 mb-1">
                       <span className="font-semibold">Date:</span> {item.date}
                     </p>
                     <p className="text-sm text-gray-400 mb-1">
-                      <span className="font-semibold">Timeslot:</span> {item.timeslot.from} - {item.timeslot.to}
+                      <span className="font-semibold">Timeslot:</span> {item.timeslot.from} -{" "}
+                      {item.timeslot.to}
+                    </p>
+                    <p className="text-sm text-gray-400 mb-1">
+                      <span className="font-semibold">Mode:</span> {itemMode}
                     </p>
                     <p className="text-sm text-gray-400">
                       <span className="font-semibold">Cost (₹):</span> {therapyCost}
@@ -206,16 +199,14 @@ export default function CartPage() {
             })}
           </div>
 
-          {/* Total Amount */}
           <div className="mt-8 flex justify-end">
             <h2 className="text-2xl font-semibold">Total Amount: ₹{totalAmount}</h2>
           </div>
 
-          {/* Checkout Button */}
           <div className="mt-6 flex justify-center">
             <button
               onClick={handleCheckout}
-              className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 transition text-lg font-semibold"
+              className="bg-purple-600 text-white px-6 py-3 rounded-md hover:bg-purple-700 transition text-lg font-semibold"
             >
               Proceed to Payment
             </button>

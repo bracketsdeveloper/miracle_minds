@@ -1,51 +1,45 @@
 // routes/paymentRoutes.js
-
 const express = require("express");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const { authenticate } = require("../middleware/authenticate");
 const Cart = require("../models/Cart");
 const Booking = require("../models/Booking");
+const Therapist = require("../models/Therapist");
 
 const router = express.Router();
 
-// Create a Razorpay instance with your credentials
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-/**
- * 1) Create Razorpay Order
- *    - Calculates total from user's cart
- *    - Creates an order on Razorpay's backend
- */
+// 1) Create an order
 router.post("/create-order", authenticate, async (req, res) => {
   try {
     const userId = req.user._id;
 
-    // Fetch cart items for user
+    // fetch cart
     const cartItems = await Cart.find({ userId }).populate("therapies");
     if (!cartItems.length) {
-      return res.status(400).json({ success: false, message: "Cart is empty!" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Cart is empty!" });
     }
 
-    // Calculate total cost
+    // total cost
     let totalAmount = 0;
     cartItems.forEach((item) => {
       totalAmount += item.therapies[0]?.cost || 0;
     });
 
-    // Razorpay needs amount in paise, so multiply by 100
+    // create order on razorpay
     const amountInPaise = totalAmount * 100;
-
-    // Create order on Razorpay
     const options = {
       amount: amountInPaise,
       currency: "INR",
       receipt: `receipt_order_${Date.now()}`,
     };
-
     const order = await razorpay.orders.create(options);
 
     return res.status(200).json({
@@ -53,26 +47,23 @@ router.post("/create-order", authenticate, async (req, res) => {
       orderId: order.id,
       amount: amountInPaise,
       currency: "INR",
-      cartItems, // We'll use these on the client side to keep track
     });
   } catch (error) {
     console.error("Error creating Razorpay order:", error);
-    res.status(500).json({ success: false, message: "Error creating order" });
+    res
+      .status(500)
+      .json({ success: false, message: "Error creating order" });
   }
 });
 
-/**
- * 2) Verify Payment & Create Bookings
- *    - Verifies Razorpay signature
- *    - Creates a booking for each cart item with profileId
- *    - Clears the cart
- */
+// 2) Verify Payment and create Bookings
 router.post("/verify", authenticate, async (req, res) => {
   try {
     const userId = req.user._id;
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+      req.body;
 
-    // 1) Verify signature
+    // signature
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
@@ -80,36 +71,52 @@ router.post("/verify", authenticate, async (req, res) => {
       .digest("hex");
 
     if (expectedSignature !== razorpay_signature) {
-      return res.status(400).json({ success: false, message: "Invalid signature" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid signature" });
     }
 
-    // 2) Payment is valid => fetch cart
+    // cart
     const cartItems = await Cart.find({ userId }).populate("therapies");
     if (!cartItems.length) {
       return res
         .status(400)
-        .json({ success: false, message: "Cart is empty or already cleared." });
+        .json({ success: false, message: "Cart is empty or cleared." });
     }
 
-    // 3) Create Bookings
+    // create bookings
     for (const item of cartItems) {
-      const cost = item.therapies[0]?.cost || 0;
-
-      // Ensure profileId is present
-      if (!item.profileId) {
-        return res.status(400).json({ success: false, message: "Profile ID missing in cart item." });
+      // fetch the assigned therapist
+      let therapistName = "";
+      let therapistId = null;
+      if (item.therapist) {
+        const therapistDoc = await Therapist.findOne({
+          userId: item.therapist,
+        });
+        if (therapistDoc) {
+          therapistId = therapistDoc._id;
+          therapistName = therapistDoc.name;
+        }
       }
 
-      // Create a booking for each item
+      const cost = item.therapies[0]?.cost || 0;
+
       await Booking.create({
         userId,
-        profileId: item.profileId, // Store profileId
+        profileId: item.profileId,
         therapies: item.therapies.map((t) => t._id),
         date: item.date,
         timeslot: {
           from: item.timeslot.from,
           to: item.timeslot.to,
         },
+
+        // store mode
+        mode: item.mode?.toUpperCase() || "ONLINE",
+        // store therapist info
+        therapistId,
+        therapistName,
+
         paymentId: razorpay_payment_id,
         orderId: razorpay_order_id,
         signature: razorpay_signature,
@@ -118,7 +125,7 @@ router.post("/verify", authenticate, async (req, res) => {
       });
     }
 
-    // 4) Clear cart
+    // clear cart
     await Cart.deleteMany({ userId });
 
     return res.status(200).json({
@@ -127,7 +134,9 @@ router.post("/verify", authenticate, async (req, res) => {
     });
   } catch (error) {
     console.error("Error verifying payment:", error);
-    res.status(500).json({ success: false, message: "Error verifying payment" });
+    res
+      .status(500)
+      .json({ success: false, message: "Error verifying payment" });
   }
 });
 

@@ -14,7 +14,7 @@ app.use(express.json());
 // Configure CORS for frontend (localhost:3000)
 app.use(
   cors({
-    origin: "https://miracle-minds-frontend.vercel.app", // Allow frontend requests
+    origin: "http://localhost:3000", // Allow frontend requests "https://miracle-minds-frontend.vercel.app" |
     credentials: true, // Allow cookies and authentication headers
   })
 );
@@ -39,9 +39,11 @@ const therapistRoutes = require("./routes/therapistRoutes");
 const cartRoutes = require("./routes/cart.js"); // Import cart routes
 const paymentRoutes = require("./routes/paymentRoutes.js");
 const refundRoutes = require("./routes/refundRoutes");
-
+const emailVerificationRoutes = require("./routes/emailVerification");
+// const reportRoutes = require("./routes/reportRoutes.js");
 // Use routes
 app.use("/api/auth", authRoutes);
+
 app.use("/api/user", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api", timeslotRoutes);
@@ -53,6 +55,18 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/bookings", refundRoutes);
 const adminBookingRoutes = require("./routes/adminBookingRoutes");
 app.use("/api/bookings", adminBookingRoutes);
+
+app.use("/api/auth", emailVerificationRoutes);
+const expertProfileRoutes = require("./routes/expertProfileRoutes.js"); // Import expert profile routes
+app.use("/api", expertProfileRoutes); 
+const expertAvailabilityRoutes = require("./routes/expertAvailabilityRoutes");
+app.use("/api", expertAvailabilityRoutes);
+const expertBookingRoutes = require('./routes/expertBookingRoutes');
+app.use('/api', expertBookingRoutes);
+const subAdminRoutes = require('./routes/subAdminRoutes');
+app.use('/api', subAdminRoutes);
+
+// app.use("/api/reports" ,reportRoutes)
 
 // Start server (original)
 const PORT = process.env.PORT || 5000;

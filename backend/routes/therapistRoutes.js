@@ -84,4 +84,24 @@ router.delete("/therapists/:id", authenticate, authorizeAdmin, async (req, res) 
   }
 });
 
+router.get("/therapists/:id", authenticate, async (req, res) => {
+  try {
+    const therapistId = req.params.id;
+
+    // If you only want certain fields, you can use .select('name about photo expertise')
+    const therapist = await Therapist.findById(therapistId);
+    if (!therapist) {
+      return res.status(404).json({ message: "Therapist not found" });
+    }
+
+    // Return the entire doc or only certain fields
+    return res.status(200).json(therapist);
+  } catch (error) {
+    console.error("Error fetching therapist:", error);
+    return res
+      .status(500)
+      .json({ message: "Server error fetching therapist profile", error: error.message });
+  }
+});
+
 module.exports = router;
