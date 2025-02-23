@@ -34,7 +34,7 @@ export default function ExpertProfile() {
         // 1) Get existing expert profile
         let fetchedProfile = null;
         try {
-          const resProfile = await axios.get("https://miracle-minds.vercel.app/api/expert/profile", {
+          const resProfile = await axios.get("http://localhost:5000/api/expert/profile", {
             headers: { Authorization: `Bearer ${token}` },
           });
           fetchedProfile = resProfile.data;
@@ -47,7 +47,7 @@ export default function ExpertProfile() {
         }
 
         // 2) Get therapies for selection
-        const resTherapies = await axios.get("https://miracle-minds.vercel.app/api/therapies", {
+        const resTherapies = await axios.get("http://localhost:5000/api/therapies", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setTherapies(resTherapies.data);
@@ -154,13 +154,13 @@ export default function ExpertProfile() {
       let res;
       if (profile) {
         // Update
-        res = await axios.put("https://miracle-minds.vercel.app/api/expert/profile", payload, {
+        res = await axios.put("http://localhost:5000/api/expert/profile", payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
         toast.success("Profile updated successfully!");
       } else {
         // Create
-        res = await axios.post("https://miracle-minds.vercel.app/api/expert/profile", payload, {
+        res = await axios.post("http://localhost:5000/api/expert/profile", payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
         toast.success("Profile created successfully!");

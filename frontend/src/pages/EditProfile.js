@@ -21,7 +21,7 @@ export default function EditProfile() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await axios.get('https://miracle-minds.vercel.app/api/user', {
+        const response = await axios.get('http://localhost:5000/api/user', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
@@ -64,7 +64,7 @@ export default function EditProfile() {
       return;
     }
     try {
-      await axios.put('https://miracle-minds.vercel.app/api/user/edit', formData, {
+      await axios.put('http://localhost:5000/api/user/edit', formData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
@@ -81,7 +81,7 @@ export default function EditProfile() {
     e.preventDefault();
     try {
       const response = await axios.post(
-        'https://miracle-minds.vercel.app/api/user/add-profile',
+        'http://localhost:5000/api/user/add-profile',
         newProfile,
         {
           headers: {

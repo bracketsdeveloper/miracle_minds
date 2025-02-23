@@ -28,7 +28,7 @@ export function CartProvider({ children }) {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await axios.get('https://miracle-minds.vercel.app/api/cart', {
+      const response = await axios.get('http://localhost:5000/api/cart', {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCartItems(response.data);
@@ -41,7 +41,7 @@ export function CartProvider({ children }) {
   const removeFromCart = async (itemId) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`https://miracle-minds.vercel.app/api/cart/${itemId}`, {
+      await axios.delete(`http://localhost:5000/api/cart/${itemId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       // After deletion, refetch cart
@@ -55,7 +55,7 @@ export function CartProvider({ children }) {
   const addToCart = async (payload) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.post('https://miracle-minds.vercel.app/api/cart', payload, {
+      await axios.post('http://localhost:5000/api/cart', payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       // After addition, refetch cart

@@ -41,7 +41,7 @@ export default function SubAdminManager() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const res = await axios.get("https://miracle-minds.vercel.app/api/admin/sub-admins", {
+      const res = await axios.get("http://localhost:5000/api/admin/sub-admins", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSubAdmins(res.data);
@@ -60,7 +60,7 @@ export default function SubAdminManager() {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        "https://miracle-minds.vercel.app/api/admin/sub-admins",
+        "http://localhost:5000/api/admin/sub-admins",
         newAdminData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -119,7 +119,7 @@ export default function SubAdminManager() {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `https://miracle-minds.vercel.app/api/admin/sub-admins/${adminId}`,
+        `http://localhost:5000/api/admin/sub-admins/${adminId}`,
         { permissions: tempPermissions },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -142,7 +142,7 @@ export default function SubAdminManager() {
     if (!window.confirm("Are you sure you want to delete this sub-admin?")) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`https://miracle-minds.vercel.app/api/admin/sub-admins/${adminId}`, {
+      await axios.delete(`http://localhost:5000/api/admin/sub-admins/${adminId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchSubAdmins();

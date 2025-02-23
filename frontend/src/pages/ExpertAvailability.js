@@ -27,7 +27,7 @@ export default function ExpertAvailability() {
       try {
         const token = localStorage.getItem("token");
         const dateStr = selectedDate.format("YYYY-MM-DD");
-        const res = await axios.get(`https://miracle-minds.vercel.app/api/expert/availability?date=${dateStr}`, {
+        const res = await axios.get(`http://localhost:5000/api/expert/availability?date=${dateStr}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUserSlots(res.data || []);
@@ -66,7 +66,7 @@ export default function ExpertAvailability() {
       const token = localStorage.getItem("token");
       const dateStr = selectedDate.format("YYYY-MM-DD");
       await axios.post(
-        "https://miracle-minds.vercel.app/api/expert/availability",
+        "http://localhost:5000/api/expert/availability",
         { date: dateStr, slots: userSlots },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -87,7 +87,7 @@ export default function ExpertAvailability() {
       const token = localStorage.getItem("token");
       const sourceDate = selectedDate.format("YYYY-MM-DD");
       await axios.post(
-        "https://miracle-minds.vercel.app/api/expert/availability/recurring",
+        "http://localhost:5000/api/expert/availability/recurring",
         { sourceDate, recurringDays },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -110,7 +110,7 @@ export default function ExpertAvailability() {
       const sourceDate = selectedDate.format("YYYY-MM-DD");
       const targetDates = copyDates.map((d) => d.format("YYYY-MM-DD"));
       await axios.post(
-        "https://miracle-minds.vercel.app/api/expert/availability/copy",
+        "http://localhost:5000/api/expert/availability/copy",
         { sourceDate, targetDates },
         { headers: { Authorization: `Bearer ${token}` } }
       );

@@ -10,7 +10,7 @@ export default function Welcome() {
     // Fetch username from the backend
     const fetchUserName = async () => {
       try {
-        const response = await axios.get('https://miracle-minds.vercel.app/api/user', {
+        const response = await axios.get('http://localhost:5000/api/user', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },

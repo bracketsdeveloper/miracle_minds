@@ -39,7 +39,7 @@ export default function UpcomingMeetingsPage() {
         });
         return;
       }
-      const res = await axios.get("https://miracle-minds.vercel.app/api/bookings/upcoming", {
+      const res = await axios.get("http://localhost:5000/api/bookings/upcoming", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUpcoming(res.data);
@@ -95,7 +95,7 @@ export default function UpcomingMeetingsPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `https://miracle-minds.vercel.app/api/bookings/timeslots?date=${dateVal}`,
+        `http://localhost:5000/api/bookings/timeslots?date=${dateVal}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setTimeslots(response.data);
@@ -123,7 +123,7 @@ export default function UpcomingMeetingsPage() {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        "https://miracle-minds.vercel.app/api/bookings/reschedule",
+        "http://localhost:5000/api/bookings/reschedule",
         {
           bookingId: selectedBooking._id,
           date: newDate,
@@ -169,7 +169,7 @@ export default function UpcomingMeetingsPage() {
       const token = localStorage.getItem("token");
       // Suppose there's a route GET /api/therapists/:id
       const res = await axios.get(
-        `https://miracle-minds.vercel.app/api/therapists/${therapistObj._id}`,
+        `http://localhost:5000/api/therapists/${therapistObj._id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setExpertProfile(res.data);

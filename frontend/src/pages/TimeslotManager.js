@@ -25,7 +25,7 @@ export default function TimeslotManager() {
       try {
         const token = localStorage.getItem('token');
         const response = await axios.get(
-          `https://miracle-minds.vercel.app/api/timeslots?date=${selectedDate.format('YYYY-MM-DD')}`,
+          `http://localhost:5000/api/timeslots?date=${selectedDate.format('YYYY-MM-DD')}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setTimeslots(response.data);
@@ -55,7 +55,7 @@ export default function TimeslotManager() {
     try {
       const token = localStorage.getItem('token');
       const payload = { date: selectedDate.format('YYYY-MM-DD'), timeslots };
-      await axios.post('https://miracle-minds.vercel.app/api/timeslots', payload, {
+      await axios.post('http://localhost:5000/api/timeslots', payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success('Timeslots saved successfully!');
@@ -77,7 +77,7 @@ export default function TimeslotManager() {
         sourceDate: selectedDate.format('YYYY-MM-DD'),
         targetDates: selectedDates.map((date) => date.format('YYYY-MM-DD')),
       };
-      await axios.post('https://miracle-minds.vercel.app/api/timeslots/copy', payload, {
+      await axios.post('http://localhost:5000/api/timeslots/copy', payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success('Timeslots copied successfully!');
@@ -97,7 +97,7 @@ export default function TimeslotManager() {
     try {
       const token = localStorage.getItem('token');
       const payload = { sourceDate: selectedDate.format('YYYY-MM-DD'), recurringDays };
-      await axios.post('https://miracle-minds.vercel.app/api/timeslots/recurring', payload, {
+      await axios.post('http://localhost:5000/api/timeslots/recurring', payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success('Recurring timeslots applied successfully!');

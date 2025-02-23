@@ -24,7 +24,7 @@ export default function ExpertUpcomingMeetings() {
       }
 
       const response = await axios.get(
-        "https://miracle-minds.vercel.app/api/expert/bookings/upcoming",
+        "http://localhost:5000/api/expert/bookings/upcoming",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setBookings(response.data);

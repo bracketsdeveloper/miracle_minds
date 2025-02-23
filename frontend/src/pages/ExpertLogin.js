@@ -15,7 +15,7 @@ export default function ExpertLogin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("https://miracle-minds.vercel.app/api/auth/login", {
+      const response = await axios.post("http://localhost:5000/api/auth/login", {
         email,
         password,
       });
