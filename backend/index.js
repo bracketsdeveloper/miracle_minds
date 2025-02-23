@@ -14,7 +14,7 @@ app.use(express.json());
 // Configure CORS for frontend (localhost:3000)
 app.use(
   cors({
-    origin:"https://miracle-minds-frontend.vercel.app" , // Allow frontend requests || "http://localhost:3000"
+    origin:"https://miracle-minds-frontend.vercel.app", // Allow frontend requests || "http://localhost:3000"
     credentials: true, // Allow cookies and authentication headers
   })
 );
