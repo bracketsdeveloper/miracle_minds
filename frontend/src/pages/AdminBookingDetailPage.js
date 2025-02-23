@@ -19,7 +19,7 @@ export default function AdminBookingDetailPage() {
   const fetchBookingDetail = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`http://localhost:5000/api/bookings/admin/detail/${bookingId}`, {
+      const response = await axios.get(`https://miracle-minds.vercel.app/api/bookings/admin/detail/${bookingId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setBooking(response.data);
@@ -45,7 +45,7 @@ export default function AdminBookingDetailPage() {
     }
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/admin/reports/${bookingId}/upload-reports`,
+        `https://miracle-minds.vercel.app/api/admin/reports/${bookingId}/upload-reports`,
         formData,
         {
           headers: {

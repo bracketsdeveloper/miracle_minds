@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const sendMail = require("../utils/sendMail");
 const router = express.Router();
+require('dotenv').config();
 
 // SIGNUP
 router.post("/signup", async (req, res) => {
@@ -27,11 +28,7 @@ router.post("/signup", async (req, res) => {
       assessment: role === "EXPERT" ? "" : assessment,
       password: hashedPassword,
       role: role || "GENERAL",
-      // Only do this if you want them unverified by default
-      isVerified: false,
-      // Optionally set isSuperAdmin if you want to create them as super admin
-      // isSuperAdmin: role === "ADMIN" ? true : false,
-      // permissions: role === "ADMIN" ? [...] : [...],
+      isVerified: false, // Unverified by default
     });
 
     await newUser.save();
@@ -42,19 +39,42 @@ router.post("/signup", async (req, res) => {
     });
     const verificationLink = `${process.env.FRONTEND_URL}/email-verification?token=${token}`;
 
+    // HTML content for the email
+    const htmlContent = `
+      <html>
+        <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+            <h2 style="color: #333333; text-align: center;">Email Verification</h2>
+            <p style="color: #555555; font-size: 16px; line-height: 1.6;">Hello ${name},</p>
+            <p style="color: #555555; font-size: 16px; line-height: 1.6;">Thank you for registering with us. To complete your registration, please verify your email address by clicking the button below:</p>
+            
+            <div style="text-align: center; margin: 20px 0;">
+              <a href="${verificationLink}" style="background-color: #4CAF50; color: white; padding: 12px 24px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; border-radius: 5px; cursor: pointer;">
+                Verify Email
+              </a>
+            </div>
+
+            <p style="color: #555555; font-size: 16px; line-height: 1.6;">If you did not create an account with us, please ignore this email.</p>
+            <p style="color: #555555; font-size: 16px; line-height: 1.6;">This link is valid for 24 hours. After that, you will need to request a new verification email.</p>
+            
+            <p style="color: #555555; font-size: 16px; line-height: 1.6;">Thank you,</p>
+            <p style="color: #555555; font-size: 16px; line-height: 1.6;">The ${process.env.APP_NAME || "App"} Team</p>
+          </div>
+        </body>
+      </html>
+    `;
+
     // Send verification email
     await sendMail({
       to: email,
       subject: "Verify Your Email",
-      text: `Hello ${name},\n\nPlease verify your email by clicking the link:\n${verificationLink}\n\nThis link is valid for 24 hours.\nThank you.`,
+      html: htmlContent, // Use HTML content instead of plain text
     });
 
-    return res
-      .status(201)
-      .json({
-        message: "User registered successfully. Please verify your email.",
-        role: newUser.role,
-      });
+    return res.status(201).json({
+      message: "User registered successfully. Please verify your email.",
+      role: newUser.role,
+    });
   } catch (error) {
     console.error("Error in signup:", error);
     return res.status(500).json({ error: "Internal server error." });

@@ -14,7 +14,7 @@ export default function TherapyManager() {
     const fetchTherapies = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get("http://localhost:5000/api/therapies", {
+        const response = await axios.get("https://miracle-minds.vercel.app/api/therapies", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setTherapies(response.data);
@@ -36,14 +36,14 @@ export default function TherapyManager() {
       const token = localStorage.getItem("token");
       if (isEditing) {
         const response = await axios.put(
-          `http://localhost:5000/api/therapies/update/${editId}`,
+          `https://miracle-minds.vercel.app/api/therapies/update/${editId}`,
           newTherapy,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setTherapies(therapies.map((t) => (t._id === editId ? response.data.therapy : t)));
       } else {
         const response = await axios.post(
-          "http://localhost:5000/api/therapies/add",
+          "https://miracle-minds.vercel.app/api/therapies/add",
           newTherapy,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -61,7 +61,7 @@ export default function TherapyManager() {
   const deleteTherapy = async (id) => {
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`http://localhost:5000/api/therapies/delete/${id}`, {
+      await axios.delete(`https://miracle-minds.vercel.app/api/therapies/delete/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setTherapies(therapies.filter((t) => t._id !== id));

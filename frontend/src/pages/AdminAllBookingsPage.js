@@ -30,7 +30,7 @@ export default function AdminAllBookingsPage() {
   const fetchTherapies = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get("http://localhost:5000/api/therapies", {
+      const res = await axios.get("https://miracle-minds.vercel.app/api/therapies", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setTherapies(res.data);
@@ -42,7 +42,7 @@ export default function AdminAllBookingsPage() {
   const fetchAllBookings = async (params) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get("http://localhost:5000/api/bookings/admin/all", {
+      const res = await axios.get("https://miracle-minds.vercel.app/api/bookings/admin/all", {
         headers: { Authorization: `Bearer ${token}` },
         params,
       });

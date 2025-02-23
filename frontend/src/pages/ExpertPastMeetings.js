@@ -27,7 +27,7 @@ export default function ExpertPastMeetings() {
       }
 
       const response = await axios.get(
-        "http://localhost:5000/api/expert/bookings/past",
+        "https://miracle-minds.vercel.app/api/expert/bookings/past",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setBookings(response.data);

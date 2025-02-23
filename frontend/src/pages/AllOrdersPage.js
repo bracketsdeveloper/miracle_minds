@@ -35,7 +35,7 @@ export default function AllOrdersPage() {
         return;
       }
 
-      const response = await axios.get('http://localhost:5000/api/bookings/all', {
+      const response = await axios.get('https://miracle-minds.vercel.app/api/bookings/all', {
         headers: { Authorization: `Bearer ${token}` },
       });
       setAllBookings(response.data);

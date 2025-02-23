@@ -38,13 +38,13 @@ export default function TherapyBooking() {
       try {
         const token = localStorage.getItem("token");
         // 1) Therapies
-        const therapyRes = await axios.get("http://localhost:5000/api/therapies", {
+        const therapyRes = await axios.get("https://miracle-minds.vercel.app/api/therapies", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setTherapies(therapyRes.data);
 
         // 2) User => profiles
-        const userRes = await axios.get("http://localhost:5000/api/user", {
+        const userRes = await axios.get("https://miracle-minds.vercel.app/api/user", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const userProfiles = userRes.data?.profiles || [];
@@ -85,7 +85,7 @@ export default function TherapyBooking() {
         const therapyIds = selectedTherapies.join(","); // "id1,id2"
 
         // build query
-        let url = `http://localhost:5000/api/bookings/timeslots?date=${dateStr}&mode=${mode}&therapies=${therapyIds}`;
+        let url = `https://miracle-minds.vercel.app/api/bookings/timeslots?date=${dateStr}&mode=${mode}&therapies=${therapyIds}`;
 
         const res = await axios.get(url, {
           headers: { Authorization: `Bearer ${token}` },
@@ -166,7 +166,7 @@ export default function TherapyBooking() {
         profileId: selectedProfile,
         mode,
       };
-      const response = await axios.post("http://localhost:5000/api/bookings/book", payload, {
+      const response = await axios.post("https://miracle-minds.vercel.app/api/bookings/book", payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success(response.data.message || "Added to cart successfully!", {

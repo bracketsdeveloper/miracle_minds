@@ -90,7 +90,7 @@ export default function AdminDashboard() {
     // If you want, you can also fetch the user from an API to confirm
     /*
     // e.g. GET /api/user/me
-    axios.get('http://localhost:5000/api/user/me', { 
+    axios.get('https://miracle-minds.vercel.app/api/user/me', { 
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     })
     .then(res => {

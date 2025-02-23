@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const sendMail = require("../utils/sendMail");
 const router = express.Router();
+require('dotenv').config();
 
 router.get("/verify", async (req, res) => {
   try {

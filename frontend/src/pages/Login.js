@@ -14,7 +14,7 @@ export default function SignIn() {
     e.preventDefault();
     try {
       // 1) Make the login request
-      const response = await axios.post("http://localhost:5000/api/auth/login", {
+      const response = await axios.post("https://miracle-minds.vercel.app/api/auth/login", {
         email,
         password,
       });
