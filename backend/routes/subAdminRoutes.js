@@ -3,6 +3,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
+const bcrypt = require("bcryptjs");
 const { authenticate, authorizeAdmin } = require("../middleware/authenticate");
 
 /**
@@ -30,6 +31,8 @@ router.get("/admin/sub-admins", authenticate, authorizeAdmin, async (req, res) =
  * POST /api/admin/sub-admins
  * Create a new sub-admin with certain permissions
  */
+
+
 router.post("/admin/sub-admins", authenticate, authorizeAdmin, async (req, res) => {
   try {
     const { name, email, phone, password, permissions } = req.body;
@@ -39,13 +42,18 @@ router.post("/admin/sub-admins", authenticate, authorizeAdmin, async (req, res) 
       return res.status(400).json({ message: "Missing required fields" });
     }
 
+    // Hash the password before storing it
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
     // Create user with role=ADMIN and specified permissions
     const newUser = new User({
       name,
       email,
       phone,
-      password, // You'd want to hash it in a real production app
+      password: hashedPassword, // Store the hashed password
       role: "ADMIN",
+      isVerified: true,
       permissions: permissions || [],
     });
 
@@ -89,7 +97,7 @@ router.put("/admin/sub-admins/:id", authenticate, authorizeAdmin, async (req, re
  * DELETE /api/admin/sub-admins/:id
  * Remove the sub-admin
  */
-router.delete("/admin/sub-admins/:id", authenticate, authorizeAdmin, async (req, res) => {
+router.delete("/admin/deletesub-admins/:id", authenticate, authorizeAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -101,13 +109,51 @@ router.delete("/admin/sub-admins/:id", authenticate, authorizeAdmin, async (req,
       return res.status(400).json({ message: "User is not an admin" });
     }
 
-    // Possibly ensure we are not deleting the super admin
-    await user.remove();
+    // Ensure we are not deleting the super admin (Optional Check)
+    if (user.isSuperAdmin) {
+      return res.status(403).json({ message: "Cannot delete super admin" });
+    }
+
+    // Use findByIdAndDelete instead of remove()
+    await User.findByIdAndDelete(id);
+
     res.status(200).json({ message: "Sub-admin deleted successfully" });
   } catch (error) {
     console.error("Error deleting sub-admin:", error);
     res.status(500).json({ message: "Server error deleting sub-admin" });
   }
 });
+
+router.put("/admin/sub-admins/change-password/:id", authenticate, authorizeAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: "Both old and new passwords are required" });
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "Sub-admin user not found" });
+    }
+
+    // Verify the old password
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Old password is incorrect" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    console.error("Error changing password:", error);
+    res.status(500).json({ message: "Failed to change password" });
+  }
+});
+
 
 module.exports = router;

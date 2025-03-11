@@ -2,10 +2,14 @@
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AdminUpcomingBookingsPage() {
   const [upcomingBookings, setUpcomingBookings] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchUpcomingBookings();
@@ -20,13 +24,39 @@ export default function AdminUpcomingBookingsPage() {
       setUpcomingBookings(response.data);
     } catch (error) {
       console.error("Error fetching upcoming bookings:", error);
+      toast.error("Failed to fetch upcoming bookings.", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+    }
+  };
+
+  // Instead of physically deleting, we call an endpoint that sets isCanceled: true
+  const handleCancelBooking = async (bookingId) => {
+    if (!window.confirm("Are you sure you want to cancel this booking?")) return;
+    try {
+      const token = localStorage.getItem("token");
+      // Call the new "cancel" endpoint (or a put/patch)
+      await axios.patch(`https://miracle-minds.vercel.app/api/bookings/admin/cancel/${bookingId}`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Booking canceled successfully.", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      fetchUpcomingBookings();
+    } catch (error) {
+      console.error("Error canceling booking:", error);
+      toast.error("Failed to cancel booking.", {
+        position: "top-center",
+        autoClose: 3000,
+      });
     }
   };
 
   return (
     <div className="p-6 bg-gray-900 text-gray-200">
       <h1 className="text-2xl font-bold mb-4">Admin - Upcoming Bookings</h1>
-
       {upcomingBookings.length > 0 ? (
         <div className="overflow-auto">
           <table className="w-full text-left text-gray-300">
@@ -37,14 +67,13 @@ export default function AdminUpcomingBookingsPage() {
                 <th className="px-4 py-2">Date</th>
                 <th className="px-4 py-2">Timeslot</th>
                 <th className="px-4 py-2">Status</th>
-                <th className="px-4 py-2">Action</th>
+                <th className="px-4 py-2">Actions</th>
               </tr>
             </thead>
             <tbody>
               {upcomingBookings.map((booking) => {
                 const userName = booking.userId ? booking.userId.name : "No User";
                 const therapyNames = booking.therapies.map((t) => t.name).join(", ");
-
                 return (
                   <tr key={booking._id} className="border-b border-gray-700">
                     <td className="px-4 py-2">{userName}</td>
@@ -54,13 +83,25 @@ export default function AdminUpcomingBookingsPage() {
                       {booking.timeslot.from} - {booking.timeslot.to}
                     </td>
                     <td className="px-4 py-2">{booking.status}</td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 space-x-2">
                       <Link
                         to={`/admin-dashboard/bookings/detail/${booking._id}`}
                         className="bg-pink-600 hover:bg-pink-700 text-white px-3 py-1 rounded"
                       >
                         View
                       </Link>
+                      <Link
+                        to={`/admin-dashboard/bookings/reschedule/${booking._id}`}
+                        className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded"
+                      >
+                        Reschedule
+                      </Link>
+                      <button
+                        onClick={() => handleCancelBooking(booking._id)}
+                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+                      >
+                        Cancel
+                      </button>
                     </td>
                   </tr>
                 );

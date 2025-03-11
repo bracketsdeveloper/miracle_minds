@@ -9,6 +9,9 @@ export default function CartPage() {
   const [cartItems, setCartItems] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
 
+  // For a potential therapist details modal
+  const [selectedTherapist, setSelectedTherapist] = useState(null);
+
   useEffect(() => {
     fetchCartItems();
   }, []);
@@ -22,8 +25,12 @@ export default function CartPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const items = response.data;
-      const total = items.reduce((sum, item) => sum + (item.therapies[0]?.cost || 0), 0);
 
+      // sum first therapy cost in each item
+      const total = items.reduce(
+        (sum, item) => sum + (item.therapies[0]?.cost || 0),
+        0
+      );
       setCartItems(items);
       setTotalAmount(total);
     } catch (error) {
@@ -98,8 +105,11 @@ export default function CartPage() {
         description: "Therapy Payment",
         order_id: orderId,
         handler: async function (response) {
-          const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
-            response;
+          const {
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature,
+          } = response;
           try {
             // 3) Verify on the server
             await axios.post(
@@ -163,7 +173,7 @@ export default function CartPage() {
               return (
                 <div
                   key={item._id}
-                  className="bg-gray-800 rounded-md p-6 shadow-lg flex flex-col justify-between transition-transform transform hover:scale-105"
+                  className="bg-gray-800 rounded-md p-6 shadow-lg flex flex-col justify-between transition transform hover:scale-105"
                 >
                   <div>
                     <h2 className="text-xl font-semibold mb-2">{therapyName}</h2>
@@ -177,8 +187,7 @@ export default function CartPage() {
                       <span className="font-semibold">Date:</span> {item.date}
                     </p>
                     <p className="text-sm text-gray-400 mb-1">
-                      <span className="font-semibold">Timeslot:</span> {item.timeslot.from} -{" "}
-                      {item.timeslot.to}
+                      <span className="font-semibold">Timeslot:</span> {item.timeslot.from} - {item.timeslot.to}
                     </p>
                     <p className="text-sm text-gray-400 mb-1">
                       <span className="font-semibold">Mode:</span> {itemMode}

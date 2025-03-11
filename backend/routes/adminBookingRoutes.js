@@ -1,24 +1,24 @@
-// routes/adminBookingRoutes.js (example)
+// routes/adminBookingRoutes.js
 const express = require("express");
 const router = express.Router();
-const { authenticate } = require("../middleware/authenticate");
-const { authorizeAdmin } = require("../middleware/authenticate");
+const { authenticate, authorizeAdmin } = require("../middleware/authenticate");
 const Booking = require("../models/Booking");
 const User = require("../models/User");
-const dayjs = require("dayjs");
 const Therapy = require("../models/Therapy");
+const Therapist = require("../models/Therapist");
+const Timeslot = require("../models/Timeslot");
+const dayjs = require("dayjs");
 
 // 1) Get all upcoming bookings
 router.get("/admin/upcoming", authenticate, authorizeAdmin, async (req, res) => {
   try {
-    // Example of "upcoming": date >= current date
-    const today = dayjs().format("YYYY-MM-DD"); // e.g. 2025-01-19
-    // Find all bookings with date >= today
-    // Populate userId and therapies
+    const today = dayjs().format("YYYY-MM-DD");
+    // Also ensure isCanceled: false so canceled bookings don’t appear
     const upcomingBookings = await Booking.find({
       date: { $gte: today },
+      isCanceled: false,
     })
-      .populate("userId", "name email") // So admin can see user name/email
+      .populate("userId", "name email")
       .populate("therapies", "name cost");
 
     res.status(200).json(upcomingBookings);
@@ -28,19 +28,17 @@ router.get("/admin/upcoming", authenticate, authorizeAdmin, async (req, res) => 
   }
 });
 
-// 2) Get all bookings (regardless of date)
+
 // 2) Get all bookings (with optional filters)
 router.get("/admin/all", authenticate, authorizeAdmin, async (req, res) => {
   try {
-    const { therapyId, month, date, status, email } = req.query;
+    const { therapyId, month, date, status, contact } = req.query;
     const filter = {};
 
     if (therapyId) {
-      // Filter if therapyId is provided; assumes a single therapy per booking
       filter.therapies = therapyId;
     }
     if (month) {
-      // Filter by month (YYYY-MM) using regex on date field
       filter.date = { $regex: `^${month}` };
     }
     if (date) {
@@ -49,10 +47,15 @@ router.get("/admin/all", authenticate, authorizeAdmin, async (req, res) => {
     if (status) {
       filter.status = status;
     }
-    if (email) {
-      // Exact match for email; change to regex if partial match is desired
-      filter.email = email;
+    if (contact) {
+      filter.$or = [
+        { email: { $regex: contact, $options: "i" } },
+        { phone: { $regex: contact, $options: "i" } },
+      ];
     }
+
+    // Optionally you might exclude canceled bookings if you want
+    // filter.isCanceled = false;
 
     const bookings = await Booking.find(filter)
       .populate("userId", "name email")
@@ -66,18 +69,19 @@ router.get("/admin/all", authenticate, authorizeAdmin, async (req, res) => {
   }
 });
 
+
+
 // 3) Get single booking details
 router.get("/admin/detail/:bookingId", authenticate, authorizeAdmin, async (req, res) => {
   try {
     const { bookingId } = req.params;
     const booking = await Booking.findById(bookingId)
-      .populate("userId", "name email address role") // more user fields
+      .populate("userId", "name email address role")
       .populate("therapies", "name cost");
 
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
-
     res.status(200).json(booking);
   } catch (error) {
     console.error("Error fetching booking detail:", error);
@@ -85,74 +89,130 @@ router.get("/admin/detail/:bookingId", authenticate, authorizeAdmin, async (req,
   }
 });
 
+// 4) POST /manual-booking (create a booking for a childName by an admin)
 router.post("/manual-booking", authenticate, authorizeAdmin, async (req, res) => {
   try {
-    const { childName, childDOB, therapies, date, timeslot, email, phone } = req.body;
-    if (!childName || !childDOB || !therapies || !date || !timeslot || !email || !phone) {
-      return res.status(400).json({ message: "All fields (childName, childDOB, therapies, date, timeslot, email, phone) are required" });
+    const {
+      childName,
+      childDOB,
+      therapies,
+      date,
+      timeslot,
+      email,
+      phone,
+      therapistId,
+      mode,
+    } = req.body;
+
+    if (
+      !childName ||
+      !childDOB ||
+      !therapies ||
+      !date ||
+      !timeslot ||
+      !email ||
+      !phone ||
+      !therapistId ||
+      !mode
+    ) {
+      return res.status(400).json({
+        message:
+          "All fields (childName, childDOB, therapies, date, timeslot, email, phone, therapistId, mode) are required",
+      });
     }
 
-    // Check if timeslot is already booked (optional)
+    // Check if timeslot is already booked for that therapist
     const existingBooking = await Booking.findOne({
       date,
       "timeslot.from": timeslot.from,
       "timeslot.to": timeslot.to,
+      therapistId,
     });
     if (existingBooking) {
-      return res.status(400).json({ message: "Timeslot is already booked" });
+      return res
+        .status(400)
+        .json({ message: "Timeslot is already booked for this therapist" });
     }
 
-    // Fetch the cost of the therapy (assuming single therapy)
-    const therapy = await Therapy.findById(therapies[0]);
-    const cost = therapy ? therapy.cost : 0;
+    // If multiple therapies, consider summing costs
+    const therapyDoc = await Therapy.findById(therapies[0]);
+    const cost = therapyDoc ? therapyDoc.cost : 0;
+
+    // fetch therapist name for storing in booking
+    let foundTherapistName = "";
+    const foundTherapist = await Therapist.findById(therapistId);
+    if (foundTherapist) {
+      foundTherapistName = foundTherapist.name;
+    }
 
     const newBooking = new Booking({
       userId: req.user._id,
       profileId: childName,
+      childDOB,
       therapies,
       date,
       timeslot,
       status: "PAID",
       email,
       phone,
-      amountPaid: cost
+      amountPaid: cost,
+      therapistId,
+      therapistName: foundTherapistName,
+      mode,
     });
+
     await newBooking.save();
     res.status(201).json({ message: "Booking created successfully" });
   } catch (error) {
     console.error("Error creating manual booking:", error);
-    res.status(500).json({ message: "Server error creating booking" });
+    res
+      .status(500)
+      .json({ message: "Server error creating booking" });
   }
 });
 
+// 5) GET /timeslots?date=YYYY-MM-DD&therapistId=...&mode=...&therapies=...
+// Unified route for AdminCreateBooking, Reschedule, etc.
 router.get("/timeslots", authenticate, async (req, res) => {
   try {
-    const { date, therapistId } = req.query;
+    const { date, therapistId, mode, therapies } = req.query;
     if (!date || !therapistId) {
-      return res.status(400).json({ message: "Date and therapistId are required" });
+      return res
+        .status(400)
+        .json({ message: "Date and therapistId are required" });
     }
 
-    // Fetch universal timeslots
+    // 1) Fetch universal timeslots
     const doc = await Timeslot.findOne({ date });
     let universalSlots = doc ? doc.slots : [];
 
-    // Fetch therapist's availability
+    // 2) Check therapist's availability
     const therapist = await Therapist.findById(therapistId);
     if (!therapist || !therapist.availability) {
-      return res.status(200).json(universalSlots.map(slot => ({ ...slot, hasExpert: false })));
+      // no availability => all universalSlots get hasExpert=false
+      const result = universalSlots.map((slot) => ({
+        ...slot,
+        hasExpert: false,
+      }));
+      return res.status(200).json(result);
     }
 
-    const therapistAvailability = therapist.availability.find((a) => a.date === date);
-    if (!therapistAvailability || !therapistAvailability.slots?.length) {
-      return res.status(200).json(universalSlots.map(slot => ({ ...slot, hasExpert: false })));
+    const therapistAvail = therapist.availability.find((a) => a.date === date);
+    if (!therapistAvail || !therapistAvail.slots?.length) {
+      // no availability for that date
+      const result = universalSlots.map((slot) => ({
+        ...slot,
+        hasExpert: false,
+      }));
+      return res.status(200).json(result);
     }
 
-    // Check which universal slots are covered by the therapist's availability
-    const result = universalSlots.map((slot) => {
+    // Mark each universal slot as hasExpert=true if fully covered by therapist's availability
+    let intermediate = universalSlots.map((slot) => {
       const slotFrom = dayjs(`${date} ${slot.from}`, "YYYY-MM-DD HH:mm");
       const slotTo = dayjs(`${date} ${slot.to}`, "YYYY-MM-DD HH:mm");
 
-      const hasExpert = therapistAvailability.slots.some((s) => {
+      const hasExpert = therapistAvail.slots.some((s) => {
         const tFrom = dayjs(`${date} ${s.from}`, "YYYY-MM-DD HH:mm");
         const tTo = dayjs(`${date} ${s.to}`, "YYYY-MM-DD HH:mm");
         return tFrom.isSameOrBefore(slotFrom) && tTo.isSameOrAfter(slotTo);
@@ -161,14 +221,36 @@ router.get("/timeslots", authenticate, async (req, res) => {
       return { ...slot, hasExpert };
     });
 
-    return res.status(200).json(result);
+    // Find existing bookings => a slot that is already booked is not available
+    const existingBookings = await Booking.find({
+      date,
+      therapistId,
+      isCanceled: false,
+    });
+
+    const bookedSlotSet = new Set(
+      existingBookings.map((b) => `${b.timeslot.from}-${b.timeslot.to}`)
+    );
+
+    // Approach B: keep them but set hasExpert=false if it's already booked
+    intermediate = intermediate.map((slot) => {
+      const slotKey = `${slot.from}-${slot.to}`;
+      if (bookedSlotSet.has(slotKey)) {
+        return { ...slot, hasExpert: false };
+      }
+      return slot;
+    });
+
+    res.status(200).json(intermediate);
   } catch (error) {
     console.error("Error fetching timeslots:", error);
-    return res.status(500).json({ message: "Server error fetching timeslots" });
+    res
+      .status(500)
+      .json({ message: "Server error fetching timeslots" });
   }
 });
 
-// GET /api/admin/manual-timeslots?date=YYYY-MM-DD
+// 6) GET /api/admin/manual-timeslots?date=YYYY-MM-DD (optional)
 router.get("/manual-timeslots", authenticate, authorizeAdmin, async (req, res) => {
   try {
     const { date } = req.query;
@@ -186,5 +268,30 @@ router.get("/manual-timeslots", authenticate, authorizeAdmin, async (req, res) =
   }
 });
 
+
+router.patch("/admin/cancel/:bookingId", authenticate, authorizeAdmin, async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    if (booking.isCanceled) {
+      return res.status(400).json({ message: "Booking is already canceled." });
+    }
+
+    // Mark it canceled
+    booking.isCanceled = true;
+    await booking.save();
+
+    return res.status(200).json({ message: "Booking canceled successfully." });
+  } catch (error) {
+    console.error("Error canceling booking:", error);
+    res
+      .status(500)
+      .json({ message: "Server error canceling booking." });
+  }
+});
 
 module.exports = router;

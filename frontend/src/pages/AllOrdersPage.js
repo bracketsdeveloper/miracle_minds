@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import dayjs from 'dayjs'; // Install with: npm install dayjs
+import dayjs from 'dayjs';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -51,7 +51,7 @@ export default function AllOrdersPage() {
   /**
    * Helper function to check if a booking is in the past:
    *  - Combine booking.date + booking.timeslot.from to create a datetime
-   *  - Parse using dayjs and compare with current time (dayjs())
+   *  - Parse using dayjs and compare with current time
    */
   const isPastBooking = (booking) => {
     const dateTimeString = `${booking.date} ${booking.timeslot.from}`;
@@ -63,24 +63,26 @@ export default function AllOrdersPage() {
   const pastBookings = allBookings.filter((booking) => isPastBooking(booking));
 
   return (
-    <div className="p-6 bg-gray-900 text-gray-200 rounded-md max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-center">Past Orders</h1>
+    <div className="p-8 bg-gradient-to-br from-purple-900 via-pink-600 to-white min-h-screen">
+      <h1 className="text-4xl font-extrabold text-white mb-8 text-center">
+        Past Orders
+      </h1>
 
       {pastBookings.length > 0 ? (
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-gray-800 rounded-lg">
+          <table className="min-w-full bg-purple-800 rounded-lg">
             <thead>
               <tr>
-                <th className="px-6 py-3 border-b-2 border-gray-700 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 border-b border-purple-700 text-left text-sm font-semibold text-white uppercase tracking-wider">
                   Therapy
                 </th>
-                <th className="px-6 py-3 border-b-2 border-gray-700 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 border-b border-purple-700 text-left text-sm font-semibold text-white uppercase tracking-wider">
                   Date
                 </th>
-                <th className="px-6 py-3 border-b-2 border-gray-700 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 border-b border-purple-700 text-left text-sm font-semibold text-white uppercase tracking-wider">
                   Timeslot
                 </th>
-                <th className="px-6 py-3 border-b-2 border-gray-700 text-left text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 border-b border-purple-700 text-left text-sm font-semibold text-white uppercase tracking-wider">
                   Status
                 </th>
               </tr>
@@ -91,18 +93,18 @@ export default function AllOrdersPage() {
                 const formattedDate = dayjs(booking.date).format('MMMM D, YYYY');
                 const formattedTimeslot = `${booking.timeslot.from} - ${booking.timeslot.to}`;
                 return (
-                  <tr key={booking._id} className="hover:bg-gray-700 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-200">
+                  <tr key={booking._id} className="hover:bg-purple-700 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                       {therapyName}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-200">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                       {formattedDate}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-200">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                       {formattedTimeslot}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-200">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-600 text-white">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-600 text-white">
                         Completed
                       </span>
                     </td>
@@ -113,7 +115,7 @@ export default function AllOrdersPage() {
           </table>
         </div>
       ) : (
-        <p className="text-center text-gray-400">No past orders found.</p>
+        <p className="text-center text-white text-2xl">No past orders found.</p>
       )}
     </div>
   );

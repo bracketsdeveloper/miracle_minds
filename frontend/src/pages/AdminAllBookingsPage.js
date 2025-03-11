@@ -1,23 +1,22 @@
-// AdminAllBookingsPage.js
-'use client';
+"use client";
 
-import { useEffect, useState, useMemo } from 'react';
-import axios from 'axios';
-import { Link } from 'react-router-dom';
-import dayjs from 'dayjs';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { useEffect, useState, useMemo } from "react";
+import axios from "axios";
+import { Link } from "react-router-dom";
+import dayjs from "dayjs";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function AdminAllBookingsPage() {
   const [allBookings, setAllBookings] = useState([]);
 
-  // Filters (Group 1)
+  // Filters
   const [therapyId, setTherapyId] = useState("");
   const [month, setMonth] = useState(""); // format "YYYY-MM"
   const [date, setDate] = useState("");   // format "YYYY-MM-DD"
   const [status, setStatus] = useState("");
-  // Separate Email Filter
-  const [email, setEmail] = useState("");
+  // Combined Contact filter: email or phone
+  const [contact, setContact] = useState("");
 
   // For dropdown of therapies
   const [therapies, setTherapies] = useState([]);
@@ -58,32 +57,26 @@ export default function AdminAllBookingsPage() {
     if (month) params.month = month;
     if (date) params.date = date;
     if (status) params.status = status;
-    if (email) params.email = email;
+    if (contact) params.contact = contact;
     fetchAllBookings(params);
   };
 
-  // Update search whenever email changes
+  // Trigger search whenever contact changes
   useEffect(() => {
     handleSearch();
-  }, [email]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contact]);
 
   const handleReset = () => {
     setTherapyId("");
     setMonth("");
     setDate("");
     setStatus("");
-    setEmail("");
+    setContact("");
     fetchAllBookings({});
   };
 
-  const distinctEmails = useMemo(() => {
-    const emails = new Set();
-    allBookings.forEach((booking) => {
-      if (booking.email) emails.add(booking.email);
-    });
-    return Array.from(emails);
-  }, [allBookings]);
-
+  // Group bookings into categories
   const groupedBookings = useMemo(() => {
     const groups = {
       Today: [],
@@ -93,16 +86,16 @@ export default function AdminAllBookingsPage() {
       "Long Ago": [],
     };
 
-    const today = dayjs().startOf('day');
-    const yesterday = dayjs().subtract(1, 'day').startOf('day');
-    const lastWeek = dayjs().subtract(7, 'day').startOf('day');
-    const lastMonth = dayjs().subtract(1, 'month').startOf('day');
+    const today = dayjs().startOf("day");
+    const yesterday = dayjs().subtract(1, "day").startOf("day");
+    const lastWeek = dayjs().subtract(7, "day").startOf("day");
+    const lastMonth = dayjs().subtract(1, "month").startOf("day");
 
     allBookings.forEach((booking) => {
       const bDate = dayjs(booking.date, "YYYY-MM-DD");
-      if (bDate.isSame(today, 'day')) {
+      if (bDate.isSame(today, "day")) {
         groups["Today"].push(booking);
-      } else if (bDate.isSame(yesterday, 'day')) {
+      } else if (bDate.isSame(yesterday, "day")) {
         groups["Yesterday"].push(booking);
       } else if (bDate.isAfter(lastWeek)) {
         groups["Last Week"].push(booking);
@@ -112,6 +105,7 @@ export default function AdminAllBookingsPage() {
         groups["Long Ago"].push(booking);
       }
     });
+
     return groups;
   }, [allBookings]);
 
@@ -119,7 +113,7 @@ export default function AdminAllBookingsPage() {
     <div className="p-6 bg-gray-900 text-gray-200">
       <h1 className="text-2xl font-bold mb-4">Admin - All Bookings</h1>
 
-      {/* Filter Section Group 1 */}
+      {/* Filter Section (Group 1) */}
       <div className="mb-4 flex flex-wrap gap-4 items-end">
         <div>
           <label className="block mb-1 text-sm">Therapy</label>
@@ -171,27 +165,21 @@ export default function AdminAllBookingsPage() {
         </div>
       </div>
 
-      {/* Separate Email Filter */}
+      {/* Contact Filter: Email / Phone */}
       <div className="mb-4 flex items-center gap-4">
         <div className="flex-1">
-          <label className="block mb-1 text-sm">Email</label>
+          <label className="block mb-1 text-sm">Email or Phone</label>
           <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            list="email-suggestions"
+            type="text"
+            value={contact}
+            onChange={(e) => setContact(e.target.value)}
             className="bg-gray-700 text-white px-3 py-2 rounded w-full"
-            placeholder="user@example.com"
+            placeholder="Enter email or phone"
           />
-          <datalist id="email-suggestions">
-            {distinctEmails.map((em, idx) => (
-              <option key={idx} value={em} />
-            ))}
-          </datalist>
         </div>
       </div>
 
-      {/* Reset Button */}
+      {/* Reset Filters */}
       <div className="mb-4">
         <button
           onClick={handleReset}
@@ -199,9 +187,15 @@ export default function AdminAllBookingsPage() {
         >
           Reset Filters
         </button>
+        <button
+          onClick={handleSearch}
+          className="ml-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded"
+        >
+          Search
+        </button>
       </div>
 
-      {/* Grouped Bookings */}
+      {/* Grouped Bookings Display */}
       {["Today", "Yesterday", "Last Week", "Last Month", "Long Ago"].map((group) => (
         <div key={group} className="mb-6">
           {groupedBookings[group].length > 0 && (
@@ -223,8 +217,16 @@ export default function AdminAllBookingsPage() {
                   </thead>
                   <tbody>
                     {groupedBookings[group].map((booking) => {
+                      // Show "CANCELED" if isCanceled is true
+                      const displayedStatus = booking.isCanceled
+                        ? "CANCELED"
+                        : booking.status;
+
                       const userName = booking.userId ? booking.userId.name : "No User";
-                      const therapyNames = booking.therapies.map((t) => t.name).join(", ");
+                      const therapyNames = booking.therapies
+                        .map((t) => t.name)
+                        .join(", ");
+
                       return (
                         <tr key={booking._id} className="border-b border-gray-700">
                           <td className="px-4 py-2">{userName}</td>
@@ -235,7 +237,7 @@ export default function AdminAllBookingsPage() {
                           <td className="px-4 py-2">
                             {booking.timeslot.from} - {booking.timeslot.to}
                           </td>
-                          <td className="px-4 py-2">{booking.status}</td>
+                          <td className="px-4 py-2">{displayedStatus}</td>
                           <td className="px-4 py-2">
                             <Link
                               to={`/admin-dashboard/bookings/detail/${booking._id}`}

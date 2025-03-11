@@ -1,6 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
 import App from "../App";
-import Home from "../pages/Home";
+// import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import Dashboard from "../pages/Dashboard";
@@ -30,6 +30,7 @@ import ExpertAvailability from "../pages/ExpertAvailability";
 import ExpertUpcomingMeetings from "../pages/ExpertUpcomingMeetings";
 import ExpertPastMeetings from "../pages/ExpertPastMeetings";
 import SubAdminManager from "../pages/SubAdminManager";
+import RescheduleBookingPage from "../pages/RescheduleBookingPage";
 
 const router = createBrowserRouter([
     {
@@ -38,7 +39,7 @@ const router = createBrowserRouter([
         children: [
             {
                 path: '',
-                element: <Home />,
+                element: <Login />,
             },
             {
                 path: '/login',
@@ -89,6 +90,10 @@ const router = createBrowserRouter([
                     {
                         path: 'home',
                         element: <Welcome />,
+                    },
+                    {
+                        path:'upcoming-meetings/bookings/reschedule/:bookingId',
+                        element:<RescheduleBookingPage/>
                     },
                     {
                         path:'edit-profile',
@@ -148,6 +153,11 @@ const router = createBrowserRouter([
                         path: 'bookings/detail/:bookingId',
                         element: <AdminBookingDetailPage/>
                     },
+                    {
+                        path:'bookings/reschedule/:bookingId',
+                        element:<RescheduleBookingPage/>
+                    }
+                    ,
                     {
                         path: 'create-bookings',
                         element: <AdminCreateBookingPage/>

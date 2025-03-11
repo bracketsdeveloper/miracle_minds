@@ -6,6 +6,7 @@ import { Bars3Icon, XMarkIcon, UserCircleIcon, ShoppingCartIcon } from "@heroico
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext"; // Assuming this context exists
 import axios from "axios";
+import logo from "../assets/logo.png";  // <-- Import your local logo file here
 
 const navigation = [];
 
@@ -44,12 +45,13 @@ export default function Header() {
     <header className="inset-x-0 top-4 z-50 m-4 rounded-md sticky bg-gradient-to-tr from-[#af235e] to-[#241d88]">
       <nav aria-label="Global" className="flex items-center justify-between p-6 lg:px-8">
         <div className="flex lg:flex-1">
-          <Link to="/" className="-m-1.5 p-1.5">
-            <span className="sr-only">Your Company</span>
+          <Link to="/" className="-m-1.5 p-1.5 fixed -top-5 left-0">
+            <span className="sr-only">Miracle Minds</span>
+            {/* Use the imported `logo` here */}
             <img
-              alt="Your Company Logo"
-              src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600"
-              className="h-8 w-auto"
+              alt="Miracle Minds"
+              src={logo}
+              className="h-40 w-auto drop-shadow-[0px_4px_8px_rgba(0,0,0,0.5)] filter contrast-150 saturate-125"
             />
           </Link>
         </div>
@@ -146,14 +148,14 @@ export default function Header() {
                   {/* Role-based dashboard link */}
                   {userRole === "EXPERT" ? (
                     <Link
-                      to="/expert-dashboard"
+                      to="/expert-dashboard/profile"
                       className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white"
                     >
                       Expert Dashboard
                     </Link>
                   ) : userRole === "ADMIN" ? (
                     <Link
-                      to="/admin-dashboard"
+                      to="/admin-dashboard/users"
                       className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white"
                     >
                       Admin Dashboard
@@ -167,7 +169,7 @@ export default function Header() {
                     </Link>
                   ) : (
                     <Link
-                      to="/dashboard"
+                      to="/dashboard/home"
                       className="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 hover:text-white"
                     >
                       Dashboard
@@ -208,9 +210,10 @@ export default function Header() {
           <div className="flex items-center justify-between">
             <Link to="/" className="-m-1.5 p-1.5">
               <span className="sr-only">Your Company</span>
+              {/* Use the same imported `logo` here as well */}
               <img
-                alt="Your Company Logo"
-                src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600"
+                alt="Miracle Minds"
+                src={logo}
                 className="h-8 w-auto"
               />
             </Link>
@@ -281,7 +284,6 @@ export default function Header() {
                     {item.name}
                   </a>
                 ))}
-
                 {!isLoggedIn && (
                   <a
                     href="/expert-signup"

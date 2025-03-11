@@ -1,4 +1,5 @@
 // routes/paymentRoutes.js
+
 const express = require("express");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
@@ -18,8 +19,6 @@ const razorpay = new Razorpay({
 router.post("/create-order", authenticate, async (req, res) => {
   try {
     const userId = req.user._id;
-
-    // fetch cart
     const cartItems = await Cart.find({ userId }).populate("therapies");
     if (!cartItems.length) {
       return res
@@ -27,13 +26,11 @@ router.post("/create-order", authenticate, async (req, res) => {
         .json({ success: false, message: "Cart is empty!" });
     }
 
-    // total cost
     let totalAmount = 0;
     cartItems.forEach((item) => {
       totalAmount += item.therapies[0]?.cost || 0;
     });
 
-    // create order on razorpay
     const amountInPaise = totalAmount * 100;
     const options = {
       amount: amountInPaise,
@@ -56,14 +53,12 @@ router.post("/create-order", authenticate, async (req, res) => {
   }
 });
 
-// 2) Verify Payment and create Bookings
+// 2) Verify Payment & create final Bookings
 router.post("/verify", authenticate, async (req, res) => {
   try {
     const userId = req.user._id;
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
-      req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
-    // signature
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
@@ -76,7 +71,6 @@ router.post("/verify", authenticate, async (req, res) => {
         .json({ success: false, message: "Invalid signature" });
     }
 
-    // cart
     const cartItems = await Cart.find({ userId }).populate("therapies");
     if (!cartItems.length) {
       return res
@@ -84,18 +78,15 @@ router.post("/verify", authenticate, async (req, res) => {
         .json({ success: false, message: "Cart is empty or cleared." });
     }
 
-    // create bookings
+    // create Bookings from each cart item
     for (const item of cartItems) {
-      // fetch the assigned therapist
-      let therapistName = "";
-      let therapistId = null;
-      if (item.therapist) {
-        const therapistDoc = await Therapist.findOne({
-          userId: item.therapist,
-        });
+      let finalTherapistId = null;
+      let finalTherapistName = "";
+      if (item.therapistId) {
+        const therapistDoc = await Therapist.findById(item.therapistId);
         if (therapistDoc) {
-          therapistId = therapistDoc._id;
-          therapistName = therapistDoc.name;
+          finalTherapistId = therapistDoc._id;
+          finalTherapistName = therapistDoc.name;
         }
       }
 
@@ -110,12 +101,9 @@ router.post("/verify", authenticate, async (req, res) => {
           from: item.timeslot.from,
           to: item.timeslot.to,
         },
-
-        // store mode
-        mode: item.mode?.toUpperCase() || "ONLINE",
-        // store therapist info
-        therapistId,
-        therapistName,
+        mode: item.mode || "ONLINE",
+        therapistId: finalTherapistId,
+        therapistName: finalTherapistName,
 
         paymentId: razorpay_payment_id,
         orderId: razorpay_order_id,

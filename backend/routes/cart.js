@@ -1,17 +1,18 @@
 // routes/cart.js
+
 const express = require("express");
 const router = express.Router();
+const { authenticate } = require("../middleware/authenticate");
 const Cart = require("../models/Cart");
 const User = require("../models/User");
 const Therapist = require("../models/Therapist");
-const { authenticate } = require("../middleware/authenticate");
 
-// Add to Cart (not typically used if /book is doing it, but kept for reference)
+// Add to Cart
 router.post("/", authenticate, async (req, res) => {
-  const { profileId, therapies, date, timeslot, therapist, mode } = req.body;
-  const userId = req.user._id;
-
   try {
+    const { profileId, therapies, date, timeslot, therapistId, mode } = req.body;
+    const userId = req.user._id;
+
     // Validate user
     const user = await User.findById(userId);
     if (!user) {
@@ -36,26 +37,29 @@ router.post("/", authenticate, async (req, res) => {
       "timeslot.to": timeslot.to,
     });
     if (existingItem) {
-      return res.status(400).json({ message: "Item already exists in the cart" });
+      return res
+        .status(400)
+        .json({ message: "Item already exists in the cart" });
     }
 
-    // Create cart item
     const cartItem = new Cart({
       userId,
       profileId,
       therapies,
       date,
       timeslot,
-      therapist, // userId from the therapist doc
-      mode: mode || "ONLINE",
+      therapistId,
+      mode: mode?.toUpperCase() || "ONLINE",
     });
     await cartItem.save();
+
     res.status(201).json({ message: "Item added to cart successfully!" });
   } catch (error) {
     console.error("Error adding item to cart:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to add item to cart", error: error.message });
+    res.status(500).json({
+      message: "Failed to add item to cart",
+      error: error.message,
+    });
   }
 });
 
@@ -63,7 +67,6 @@ router.post("/", authenticate, async (req, res) => {
 router.get("/", authenticate, async (req, res) => {
   try {
     const userId = req.user._id;
-    // basic cart items
     const cartItems = await Cart.find({ userId })
       .populate("therapies", "name cost")
       .lean();
@@ -73,26 +76,36 @@ router.get("/", authenticate, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // enhance with profile + therapist name
     const enhancedCartItems = await Promise.all(
       cartItems.map(async (item) => {
         const profile = user.profiles.find(
           (pr) => pr._id.toString() === item.profileId
         );
 
-        let therapistDetail = null;
-        if (item.therapist) {
-          therapistDetail = await Therapist.findOne({
-            userId: item.therapist,
-          }).select("name");
+        let therapistDoc = null;
+        if (item.therapistId) {
+          therapistDoc = await Therapist.findById(item.therapistId).select(
+            "name photo expertise about"
+          );
         }
 
         return {
           ...item,
           profile: profile
-            ? { name: profile.name, dateOfBirth: profile.dateOfBirth }
+            ? {
+                name: profile.name,
+                dateOfBirth: profile.dateOfBirth,
+              }
             : null,
-          therapist: therapistDetail || null,
+          therapist: therapistDoc
+            ? {
+                _id: therapistDoc._id,
+                name: therapistDoc.name,
+                photo: therapistDoc.photo,
+                expertise: therapistDoc.expertise,
+                about: therapistDoc.about,
+              }
+            : null,
         };
       })
     );
@@ -100,9 +113,10 @@ router.get("/", authenticate, async (req, res) => {
     res.status(200).json(enhancedCartItems);
   } catch (error) {
     console.error("Error fetching cart items:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to fetch cart items.", error: error.message });
+    res.status(500).json({
+      message: "Failed to fetch cart items.",
+      error: error.message,
+    });
   }
 });
 

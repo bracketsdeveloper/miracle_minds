@@ -1,4 +1,5 @@
 import React from 'react'
+import logo from "../assets/logo.png";
 
 export default function Footer() {
   return (
@@ -11,13 +12,10 @@ export default function Footer() {
             className="flex items-center mb-4 sm:mb-0 space-x-3 rtl:space-x-reverse"
           >
             <img
-              src=""
-              className="h-8"
-              alt=" Logo"
-            />
-            <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
-              Miracle Minds
-            </span>
+                          alt="Miracle Minds"
+                          src={logo}
+                          className="h-40 w-auto drop-shadow-[0px_4px_8px_rgba(0,0,0,0.5)] filter contrast-150 saturate-125"
+                        />
           </a>
           <ul className="flex flex-wrap items-center mb-6 text-sm font-medium text-white sm:mb-0 dark:text-white">
             <li>
@@ -44,11 +42,9 @@ export default function Footer() {
         </div>
         <hr className="my-6 border-white sm:mx-auto dark:border-white lg:my-8" />
         <span className="block text-sm text-white sm:text-center dark:text-white">
-          © 2023{' '}
-          <a href="" className="hover:underline">
-            Miracle Minds
-          </a>
-          . All Rights Reserved.
+          © 2025{' '}
+          
+           All Rights Reserved.
         </span>
       </div>
     </footer>

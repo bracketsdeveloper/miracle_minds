@@ -21,7 +21,7 @@ export default function ExpertLogin() {
       });
       if (response.data.role === "EXPERT") {
         toast.success("Login successful!", { position: "top-center", autoClose: 3000 });
-        navigate("/expert-dashboard");
+        navigate("/expert-dashboard/profile");
       } else {
         toast.error("Access denied. Not an expert account.", { position: "top-center", autoClose: 3000 });
       }

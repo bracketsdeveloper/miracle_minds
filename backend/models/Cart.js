@@ -1,4 +1,5 @@
 // models/Cart.js
+
 const mongoose = require("mongoose");
 
 const cartSchema = new mongoose.Schema({
@@ -8,7 +9,7 @@ const cartSchema = new mongoose.Schema({
     required: true,
   },
   profileId: {
-    type: String, // Because it's inside the User's "profiles"
+    type: String,
     required: true,
   },
   therapies: [
@@ -23,10 +24,11 @@ const cartSchema = new mongoose.Schema({
     from: { type: String, required: true },
     to: { type: String, required: true },
   },
-  therapist: {
-    type: String, // storing therapist.userId or therapist doc's userId as string
+  // store an ObjectId referencing Therapist
+  therapistId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Therapist",
   },
-  // NEW: store the chosen mode
   mode: {
     type: String,
     enum: ["ONLINE", "OFFLINE"],
